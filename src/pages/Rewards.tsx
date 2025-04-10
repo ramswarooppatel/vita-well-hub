@@ -2,6 +2,7 @@
 import React from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RewardsSystem } from "@/components/gamification/RewardsSystem";
+import { RewardHistory } from "@/components/gamification/RewardHistory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,9 @@ export default function Rewards() {
           
           <TabsContent value="rewards" className="space-y-6 pt-4">
             <RewardsSystem />
+            
+            {/* Add new RewardHistory component */}
+            <RewardHistory />
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
