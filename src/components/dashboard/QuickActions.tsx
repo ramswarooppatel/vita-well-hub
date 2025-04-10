@@ -8,6 +8,9 @@ import {
   AlarmClock,
   AlertCircle,
   Brain,
+  Award,
+  UserCog,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +18,10 @@ import { useNavigate } from "react-router-dom";
 
 export function QuickActions() {
   const navigate = useNavigate();
+  const userRole = "admin"; // For demo: "user", "doctor", "admin"
 
-  const actions = [
+  // Base actions available to all users
+  const baseActions = [
     {
       icon: Calendar,
       label: "Book Appointment",
@@ -48,12 +53,42 @@ export function QuickActions() {
       onClick: () => navigate("/cognitive-tests"),
     },
     {
-      icon: FileText,
-      label: "Medical Records",
-      color: "text-health-500",
-      onClick: () => navigate("/records"),
+      icon: Award,
+      label: "Rewards",
+      color: "text-wellness-500",
+      onClick: () => navigate("/rewards"),
     },
   ];
+  
+  // Additional actions for doctors
+  const doctorActions = [
+    {
+      icon: UserCog,
+      label: "Doctor Dashboard",
+      color: "text-health-500",
+      onClick: () => navigate("/doctor-dashboard"),
+    },
+  ];
+
+  // Additional actions for admins
+  const adminActions = [
+    {
+      icon: Shield,
+      label: "Admin Panel",
+      color: "text-urgent-500",
+      onClick: () => navigate("/admin"),
+    },
+    ...doctorActions, // Admins also have access to the doctor dashboard
+  ];
+  
+  // Combine actions based on user role
+  let actions = [...baseActions];
+  
+  if (userRole === "doctor") {
+    actions = [...baseActions, ...doctorActions];
+  } else if (userRole === "admin") {
+    actions = [...baseActions, ...adminActions];
+  }
 
   return (
     <Card>

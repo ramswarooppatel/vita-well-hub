@@ -22,6 +22,9 @@ import {
   Settings,
   Bell,
   Brain,
+  Award,
+  UserCog,
+  ShieldCheck,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -35,8 +38,14 @@ const mainNavItems = [
   { href: "/cognitive-tests", label: "Cognitive Tests", icon: Brain },
 ];
 
+const adminNavItems = [
+  { href: "/admin", label: "Admin Panel", icon: ShieldCheck },
+  { href: "/doctor-dashboard", label: "Doctor Dashboard", icon: UserCog },
+];
+
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState("admin"); // For demo: "user", "doctor", "admin"
 
   return (
     <nav className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -67,10 +76,48 @@ export function Navbar() {
                 {item.label}
               </NavLink>
             ))}
+            
+            {/* Show admin navigation for admin users */}
+            {userRole === "admin" && adminNavItems.map((item) => (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) =>
+                  `nav-link flex items-center gap-1.5 text-sm ${
+                    isActive ? "active" : ""
+                  }`
+                }
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </NavLink>
+            ))}
+            
+            {/* Show doctor dashboard link only for doctors */}
+            {userRole === "doctor" && (
+              <NavLink
+                to="/doctor-dashboard"
+                className={({ isActive }) =>
+                  `nav-link flex items-center gap-1.5 text-sm ${
+                    isActive ? "active" : ""
+                  }`
+                }
+              >
+                <UserCog className="h-4 w-4" />
+                Doctor Dashboard
+              </NavLink>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Gamification Link */}
+          <NavLink to="/rewards" className="relative">
+            <Button variant="ghost" size="icon">
+              <Award className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
+          </NavLink>
+          
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-[1.2rem] w-[1.2rem]" />
@@ -102,13 +149,23 @@ export function Navbar() {
                   john.doe@example.com
                 </p>
               </div>
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+              <DropdownMenuItem asChild>
+                <NavLink to="/profile" className="w-full cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </NavLink>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+              <DropdownMenuItem asChild>
+                <NavLink to="/rewards" className="w-full cursor-pointer">
+                  <Award className="mr-2 h-4 w-4" />
+                  <span>Rewards & Points</span>
+                </NavLink>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <NavLink to="/settings" className="w-full cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </NavLink>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -150,6 +207,46 @@ export function Navbar() {
                 {item.label}
               </NavLink>
             ))}
+            
+            {/* Show admin nav items on mobile for admins */}
+            {userRole === "admin" && adminNavItems.map((item) => (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) =>
+                  `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+                }
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </NavLink>
+            ))}
+            
+            {/* Show doctor dashboard on mobile for doctors */}
+            {userRole === "doctor" && (
+              <NavLink
+                to="/doctor-dashboard"
+                className={({ isActive }) =>
+                  `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+                }
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <UserCog className="h-4 w-4" />
+                Doctor Dashboard
+              </NavLink>
+            )}
+            
+            <NavLink
+              to="/rewards"
+              className={({ isActive }) =>
+                `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+              }
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Award className="h-4 w-4" />
+              Rewards & Points
+            </NavLink>
           </div>
         </div>
       )}

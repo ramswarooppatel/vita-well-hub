@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Award, Brain, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TestResult } from "@/types/database";
 
 export function ProgressStats() {
   const { data: stats, isLoading } = useQuery({
@@ -12,26 +13,26 @@ export function ProgressStats() {
       // Get total number of tests
       const { data: tests, error: testsError } = await supabase
         .from("cognitive_tests")
-        .select("id", { count: "exact" });
+        .select("id");
       
       if (testsError) throw testsError;
       
       // Get user's completed tests
       const { data: results, error: resultsError } = await supabase
         .from("test_results")
-        .select("test_id, score, max_score", { count: "exact" });
+        .select("test_id, score, max_score");
       
       if (resultsError) throw resultsError;
       
       // Calculate statistics
       const totalTests = tests?.length || 0;
       const completedTests = results?.length || 0;
-      const uniqueCompletedTests = new Set(results?.map(r => r.test_id)).size;
+      const uniqueCompletedTests = new Set((results as TestResult[] || []).map(r => r.test_id)).size;
       
       let totalScore = 0;
       let totalPossible = 0;
       
-      results?.forEach(r => {
+      (results as TestResult[] || []).forEach(r => {
         totalScore += r.score;
         totalPossible += r.max_score;
       });

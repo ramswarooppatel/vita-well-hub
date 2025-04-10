@@ -15,6 +15,9 @@ import NotFound from "./pages/NotFound";
 import CognitiveTests from "./pages/CognitiveTests";
 import MemoryChallenge from "./pages/MemoryChallenge";
 import CognitiveTestResult from "./pages/CognitiveTestResult";
+import Admin from "./pages/Admin";
+import DoctorDashboard from "./pages/DoctorDashboard";
+import Rewards from "./pages/Rewards";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +37,9 @@ const App = () => (
             <Route path="/cognitive-tests" element={<CognitiveTests />} />
             <Route path="/cognitive-tests/:testId" element={<MemoryChallenge />} />
             <Route path="/cognitive-tests/results/:resultId" element={<CognitiveTestResult />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+            <Route path="/rewards" element={<Rewards />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
