@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +22,8 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import Rewards from "./pages/Rewards";
 import Records from "./pages/Records";
 import Unauthorized from "./pages/Unauthorized";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,16 @@ const App = () => (
               <Route path="/rewards" element={
                 <RouteGuard allowedRoles={["patient", "doctor", "admin"]}>
                   <Rewards />
+                </RouteGuard>
+              } />
+              <Route path="/profile" element={
+                <RouteGuard allowedRoles={["patient", "doctor", "admin"]}>
+                  <Profile />
+                </RouteGuard>
+              } />
+              <Route path="/settings" element={
+                <RouteGuard allowedRoles={["patient", "doctor", "admin"]}>
+                  <Settings />
                 </RouteGuard>
               } />
               
