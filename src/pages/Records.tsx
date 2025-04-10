@@ -8,8 +8,16 @@ import {
 } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { CalendarIcon, FileMedical, Stethoscope, Flask } from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { CalendarIcon, FileText, Stethoscope, FlaskConical } from "lucide-react";
+
+// Add proper TypeScript interfaces
+interface RecordItemProps {
+  date: string;
+  title: string;
+  provider: string;
+  description: string;
+}
 
 const Records = () => {
   const [activeTab, setActiveTab] = useState("medical");
@@ -59,7 +67,7 @@ const Records = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Flask className="h-5 w-5 text-health-500" />
+                    <FlaskConical className="h-5 w-5 text-health-500" />
                     Lab Results
                   </CardTitle>
                 </CardHeader>
@@ -83,7 +91,7 @@ const Records = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <FileMedical className="h-5 w-5 text-health-500" />
+                    <FileText className="h-5 w-5 text-health-500" />
                     Prescriptions
                   </CardTitle>
                 </CardHeader>
@@ -110,7 +118,7 @@ const Records = () => {
 };
 
 // Record item component for displaying individual records
-const RecordItem = ({ date, title, provider, description }) => (
+const RecordItem = ({ date, title, provider, description }: RecordItemProps) => (
   <div className="border rounded-lg p-4 hover:border-health-300 transition-colors">
     <div className="flex justify-between items-start mb-2">
       <div>
@@ -129,8 +137,17 @@ const RecordItem = ({ date, title, provider, description }) => (
   </div>
 );
 
+// Add interfaces for the record data
+interface Record {
+  id: number;
+  date: string;
+  title: string;
+  provider: string;
+  description: string;
+}
+
 // Sample data - replace with actual data from your API
-const medicalRecords = [
+const medicalRecords: Record[] = [
   {
     id: 1,
     date: "Mar 15, 2025",
@@ -154,7 +171,7 @@ const medicalRecords = [
   },
 ];
 
-const labResults = [
+const labResults: Record[] = [
   {
     id: 1,
     date: "Mar 16, 2025",
@@ -178,7 +195,7 @@ const labResults = [
   },
 ];
 
-const prescriptions = [
+const prescriptions: Record[] = [
   {
     id: 1,
     date: "Mar 15, 2025",
