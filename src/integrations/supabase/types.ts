@@ -9,7 +9,346 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          appointment_date: string
+          created_at: string
+          doctor_name: string
+          id: string
+          is_virtual: boolean | null
+          notes: string | null
+          specialty: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_date: string
+          created_at?: string
+          doctor_name: string
+          id?: string
+          is_virtual?: boolean | null
+          notes?: string | null
+          specialty: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_date?: string
+          created_at?: string
+          doctor_name?: string
+          id?: string
+          is_virtual?: boolean | null
+          notes?: string | null
+          specialty?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cognitive_tests: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          difficulty_level: string
+          id: string
+          instructions: string
+          test_duration: number
+          test_name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          difficulty_level: string
+          id?: string
+          instructions: string
+          test_duration: number
+          test_name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          difficulty_level?: string
+          id?: string
+          instructions?: string
+          test_duration?: number
+          test_name?: string
+        }
+        Relationships: []
+      }
+      health_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          metric_type: string
+          recorded_at: string
+          source: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_type: string
+          recorded_at: string
+          source?: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_type?: string
+          recorded_at?: string
+          source?: string | null
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_records: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_url: string | null
+          id: string
+          issued_by: string | null
+          issued_date: string | null
+          record_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          issued_by?: string | null
+          issued_date?: string | null
+          record_type: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          issued_by?: string | null
+          issued_date?: string | null
+          record_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          contact_number: string | null
+          created_at: string
+          date_of_birth: string | null
+          first_name: string | null
+          gender: string | null
+          id: string
+          last_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          contact_number?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          first_name?: string | null
+          gender?: string | null
+          id: string
+          last_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          contact_number?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          first_name?: string | null
+          gender?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      test_questions: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          id: string
+          options: Json | null
+          points: number | null
+          question: string
+          question_type: string
+          test_id: string
+          time_limit: number | null
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          options?: Json | null
+          points?: number | null
+          question: string
+          question_type: string
+          test_id: string
+          time_limit?: number | null
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          id?: string
+          options?: Json | null
+          points?: number | null
+          question?: string
+          question_type?: string
+          test_id?: string
+          time_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_questions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_results: {
+        Row: {
+          answers: Json | null
+          completion_time: number
+          created_at: string
+          id: string
+          max_score: number
+          score: number
+          test_id: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          completion_time: number
+          created_at?: string
+          id?: string
+          max_score: number
+          score: number
+          test_id: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          completion_time?: number
+          created_at?: string
+          id?: string
+          max_score?: number
+          score?: number
+          test_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_results_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_tests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -7,6 +7,7 @@ import {
   FileText,
   AlarmClock,
   AlertCircle,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,10 +42,10 @@ export function QuickActions() {
       onClick: () => navigate("/symptoms"),
     },
     {
-      icon: Pill,
-      label: "Order Medicine",
+      icon: Brain,
+      label: "Cognitive Tests",
       color: "text-primary",
-      onClick: () => navigate("/pharmacy"),
+      onClick: () => navigate("/cognitive-tests"),
     },
     {
       icon: FileText,

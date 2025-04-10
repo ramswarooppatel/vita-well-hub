@@ -12,6 +12,9 @@ import Appointments from "./pages/Appointments";
 import Telemedicine from "./pages/Telemedicine";
 import SymptomChecker from "./pages/SymptomChecker";
 import NotFound from "./pages/NotFound";
+import CognitiveTests from "./pages/CognitiveTests";
+import MemoryChallenge from "./pages/MemoryChallenge";
+import CognitiveTestResult from "./pages/CognitiveTestResult";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +31,9 @@ const App = () => (
             <Route path="/appointments" element={<Appointments />} />
             <Route path="/telemedicine" element={<Telemedicine />} />
             <Route path="/symptoms" element={<SymptomChecker />} />
+            <Route path="/cognitive-tests" element={<CognitiveTests />} />
+            <Route path="/cognitive-tests/:testId" element={<MemoryChallenge />} />
+            <Route path="/cognitive-tests/results/:resultId" element={<CognitiveTestResult />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

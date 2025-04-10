@@ -21,6 +21,7 @@ import {
   LogOut,
   Settings,
   Bell,
+  Brain,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ const mainNavItems = [
   { href: "/telemedicine", label: "Telemedicine", icon: Video },
   { href: "/records", label: "Records", icon: FileText },
   { href: "/symptoms", label: "Symptom Checker", icon: AlertCircle },
+  { href: "/cognitive-tests", label: "Cognitive Tests", icon: Brain },
 ];
 
 export function Navbar() {
