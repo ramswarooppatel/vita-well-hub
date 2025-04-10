@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -197,13 +198,13 @@ const FindDoctors = () => {
     // Update URL parameters when filters change
     const params = new URLSearchParams();
     if (searchQuery) params.set("query", searchQuery);
-    if (selectedSpecialty) params.set("specialty", selectedSpecialty);
+    if (selectedSpecialty && selectedSpecialty !== "all") params.set("specialty", selectedSpecialty);
     if (showVirtualOnly) params.set("virtual", "true");
     setSearchParams(params);
     
     // Apply filters
     applyFilters();
-  }, [searchQuery, selectedSpecialty, selectedLocation, showVirtualOnly, sortOption]);
+  }, [searchQuery, selectedSpecialty, selectedLocation, showVirtualOnly, sortOption, setSearchParams]);
   
   const fetchDoctors = async () => {
     setLoading(true);
@@ -296,11 +297,11 @@ const FindDoctors = () => {
   };
   
   const handleSpecialtySelect = (value: string) => {
-    setSelectedSpecialty(value);
+    setSelectedSpecialty(value === "all" ? "" : value);
   };
   
   const handleLocationSelect = (value: string) => {
-    setSelectedLocation(value);
+    setSelectedLocation(value === "all" ? "" : value);
   };
   
   const handleSortChange = (value: string) => {
@@ -439,7 +440,7 @@ const FindDoctors = () => {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Specialties</SelectLabel>
-                          <SelectItem value="">All Specialties</SelectItem>
+                          <SelectItem value="all">All Specialties</SelectItem>
                           {specialties.map((specialty) => (
                             <SelectItem key={specialty.id} value={specialty.name}>
                               <div className="flex items-center">
@@ -465,11 +466,12 @@ const FindDoctors = () => {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Locations</SelectLabel>
-                          <SelectItem value="">All Locations</SelectItem>
+                          <SelectItem value="all">All Locations</SelectItem>
                           <SelectItem value="New York">New York</SelectItem>
                           <SelectItem value="San Francisco">San Francisco</SelectItem>
                           <SelectItem value="Boston">Boston</SelectItem>
                           <SelectItem value="Chicago">Chicago</SelectItem>
+                          <SelectItem value="India">India</SelectItem>
                           <SelectItem value="Seattle">Seattle</SelectItem>
                         </SelectGroup>
                       </SelectContent>
