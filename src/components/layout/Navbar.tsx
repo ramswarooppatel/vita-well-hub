@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -134,6 +133,21 @@ export function Navbar() {
                 >
                   <UserCog className="h-4 w-4" />
                   Doctor Dashboard
+                </NavLink>
+              )}
+
+              {/* DoctorOS navigation for doctors */}
+              {user?.role === "doctor" && (
+                <NavLink
+                  to="/doctoros"
+                  className={({ isActive }) =>
+                    `nav-link flex items-center gap-1.5 text-sm ${
+                      isActive ? "active" : ""
+                    }`
+                  }
+                >
+                  <UserCog className="h-4 w-4" />
+                  DoctorOS
                 </NavLink>
               )}
             </div>
@@ -282,6 +296,20 @@ export function Navbar() {
                   >
                     <UserCog className="h-4 w-4" />
                     Doctor Dashboard
+                  </NavLink>
+                )}
+                
+                {/* DoctorOS navigation for doctors on mobile */}
+                {user?.role === "doctor" && (
+                  <NavLink
+                    to="/doctoros"
+                    className={({ isActive }) =>
+                      `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <UserCog className="h-4 w-4" />
+                    DoctorOS
                   </NavLink>
                 )}
                 

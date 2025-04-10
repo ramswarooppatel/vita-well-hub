@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate"
+      },
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_APP_ENV": "production",
+    "VITE_SUPABASE_URL": "https://iusvkuescntbclqbtxmn.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1c3ZrdWVzY250YmNscWJ0eG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQyOTMwMTQsImV4cCI6MjA1OTg2OTAxNH0.iE9xxw-tMY_MafU5BrHqKVYfol0nRl-ojQeWo74eR6o"
+  },
+  "github": {
+    "enabled": false
+  }
+}

@@ -1,14 +1,44 @@
-
 import { Database } from '@/integrations/supabase/types';
 
 export type CognitiveTest = Database['public']['Tables']['cognitive_tests']['Row'];
 export type TestQuestion = Database['public']['Tables']['test_questions']['Row'];
 export type TestResult = Database['public']['Tables']['test_results']['Row'];
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type Appointment = Database['public']['Tables']['appointments']['Row'];
-export type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
 export type HealthMetric = Database['public']['Tables']['health_metrics']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type DoctorPatient = Database['public']['Tables']['doctor_patients']['Row'];
+
+export interface Appointment {
+  id: string;
+  appointment_date: string;
+  created_at: string;
+  doctor_id?: string;
+  doctor_name?: string;
+  is_virtual: boolean;
+  notes?: string | null;
+  specialty?: string;
+  status?: string;
+  updated_at: string;
+  user_id: string;
+  patient_name?: string; // Added field for transformed data
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+}
+
+export interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  contact_number: string | null;
+  address: string | null;
+  email?: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  role: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export type UserRole = 'admin' | 'doctor' | 'patient';

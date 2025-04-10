@@ -24,6 +24,8 @@ import Records from "./pages/Records";
 import Unauthorized from "./pages/Unauthorized";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import DoctorOS from "./pages/DoctorOS";
+import FindDoctors from "./pages/FindDoctors";
 
 const queryClient = new QueryClient();
 
@@ -97,11 +99,21 @@ const App = () => (
                   <Settings />
                 </RouteGuard>
               } />
+              <Route path="/doctors" element={
+                <RouteGuard allowedRoles={["patient", "doctor", "admin"]}>
+                  <FindDoctors />
+                </RouteGuard>
+              } />
               
               {/* Doctor routes */}
               <Route path="/doctor-dashboard" element={
                 <RouteGuard allowedRoles={["doctor", "admin"]}>
                   <DoctorDashboard />
+                </RouteGuard>
+              } />
+              <Route path="/doctoros" element={
+                <RouteGuard allowedRoles={["doctor", "admin"]}>
+                  <DoctorOS />
                 </RouteGuard>
               } />
               
