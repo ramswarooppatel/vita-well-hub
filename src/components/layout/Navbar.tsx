@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: Heart },
@@ -45,7 +47,33 @@ const adminNavItems = [
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userRole, setUserRole] = useState("admin"); // For demo: "user", "doctor", "admin"
+  const { user, profile, userRole, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out successfully");
+    navigate("/");
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    return "JD";
+  };
+
+  // Get full name or email
+  const getUserDisplayName = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name} ${profile.last_name}`;
+    }
+    return user?.email || "Guest";
+  };
 
   return (
     <nav className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -61,118 +89,136 @@ export function Navbar() {
             <span className="hidden sm:inline-block">VitaWellHub</span>
           </NavLink>
 
-          <div className="hidden md:flex items-center gap-6 ml-6">
-            {mainNavItems.map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={({ isActive }) =>
-                  `nav-link flex items-center gap-1.5 text-sm ${
-                    isActive ? "active" : ""
-                  }`
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
-            
-            {/* Show admin navigation for admin users */}
-            {userRole === "admin" && adminNavItems.map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={({ isActive }) =>
-                  `nav-link flex items-center gap-1.5 text-sm ${
-                    isActive ? "active" : ""
-                  }`
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
-            
-            {/* Show doctor dashboard link only for doctors */}
-            {userRole === "doctor" && (
-              <NavLink
-                to="/doctor-dashboard"
-                className={({ isActive }) =>
-                  `nav-link flex items-center gap-1.5 text-sm ${
-                    isActive ? "active" : ""
-                  }`
-                }
-              >
-                <UserCog className="h-4 w-4" />
-                Doctor Dashboard
-              </NavLink>
-            )}
-          </div>
+          {user && (
+            <div className="hidden md:flex items-center gap-6 ml-6">
+              {mainNavItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    `nav-link flex items-center gap-1.5 text-sm ${
+                      isActive ? "active" : ""
+                    }`
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </NavLink>
+              ))}
+              
+              {/* Show admin navigation for admin users */}
+              {userRole === "admin" && adminNavItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    `nav-link flex items-center gap-1.5 text-sm ${
+                      isActive ? "active" : ""
+                    }`
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </NavLink>
+              ))}
+              
+              {/* Show doctor dashboard link only for doctors */}
+              {userRole === "doctor" && (
+                <NavLink
+                  to="/doctor-dashboard"
+                  className={({ isActive }) =>
+                    `nav-link flex items-center gap-1.5 text-sm ${
+                      isActive ? "active" : ""
+                    }`
+                  }
+                >
+                  <UserCog className="h-4 w-4" />
+                  Doctor Dashboard
+                </NavLink>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Gamification Link */}
-          <NavLink to="/rewards" className="relative">
-            <Button variant="ghost" size="icon">
-              <Award className="h-[1.2rem] w-[1.2rem]" />
+          {user ? (
+            <>
+              {/* Gamification Link */}
+              <NavLink to="/rewards" className="relative">
+                <Button variant="ghost" size="icon">
+                  <Award className="h-[1.2rem] w-[1.2rem]" />
+                </Button>
+              </NavLink>
+              
+              {/* Notifications */}
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-[1.2rem] w-[1.2rem]" />
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-urgent text-white">
+                  3
+                </Badge>
+              </Button>
+            </>
+          ) : (
+            // Login button when not logged in
+            <Button onClick={() => navigate("/auth")} variant="default" size="sm">
+              Login
             </Button>
-          </NavLink>
-          
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-[1.2rem] w-[1.2rem]" />
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-urgent text-white">
-              3
-            </Badge>
-          </Button>
+          )}
 
           {/* Theme Toggle */}
           <ThemeToggle />
 
           {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-8 w-8 rounded-full"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt="User" />
-                  <AvatarFallback className="bg-primary text-white">JD</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <div className="flex flex-col space-y-1 p-2">
-                <p className="text-sm font-medium">John Doe</p>
-                <p className="text-xs text-muted-foreground">
-                  john.doe@example.com
-                </p>
-              </div>
-              <DropdownMenuItem asChild>
-                <NavLink to="/profile" className="w-full cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </NavLink>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <NavLink to="/rewards" className="w-full cursor-pointer">
-                  <Award className="mr-2 h-4 w-4" />
-                  <span>Rewards & Points</span>
-                </NavLink>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <NavLink to="/settings" className="w-full cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </NavLink>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar_url || ""} alt="User" />
+                    <AvatarFallback className="bg-primary text-white">{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <div className="flex flex-col space-y-1 p-2">
+                  <p className="text-sm font-medium">{getUserDisplayName()}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user.email}
+                  </p>
+                  {userRole && (
+                    <Badge variant="outline" className="w-fit mt-1">
+                      {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                    </Badge>
+                  )}
+                </div>
+                <DropdownMenuItem asChild>
+                  <NavLink to="/profile" className="w-full cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </NavLink>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <NavLink to="/rewards" className="w-full cursor-pointer">
+                    <Award className="mr-2 h-4 w-4" />
+                    <span>Rewards & Points</span>
+                  </NavLink>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <NavLink to="/settings" className="w-full cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </NavLink>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           {/* Mobile Menu Toggle */}
           <Button
@@ -194,59 +240,79 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t py-4 px-6 bg-background">
           <div className="flex flex-col space-y-4">
-            {mainNavItems.map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={({ isActive }) =>
-                  `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
-                }
-                onClick={() => setMobileMenuOpen(false)}
+            {user ? (
+              <>
+                {mainNavItems.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    className={({ isActive }) =>
+                      `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </NavLink>
+                ))}
+                
+                {/* Show admin nav items on mobile for admins */}
+                {userRole === "admin" && adminNavItems.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    className={({ isActive }) =>
+                      `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </NavLink>
+                ))}
+                
+                {/* Show doctor dashboard on mobile for doctors */}
+                {userRole === "doctor" && (
+                  <NavLink
+                    to="/doctor-dashboard"
+                    className={({ isActive }) =>
+                      `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <UserCog className="h-4 w-4" />
+                    Doctor Dashboard
+                  </NavLink>
+                )}
+                
+                <NavLink
+                  to="/rewards"
+                  className={({ isActive }) =>
+                    `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
+                  }
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Award className="h-4 w-4" />
+                  Rewards & Points
+                </NavLink>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex items-center justify-start gap-2 h-auto py-2 px-3"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Button 
+                onClick={() => navigate("/auth")}
+                className="w-full"
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
-            
-            {/* Show admin nav items on mobile for admins */}
-            {userRole === "admin" && adminNavItems.map((item) => (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={({ isActive }) =>
-                  `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
-                }
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
-            
-            {/* Show doctor dashboard on mobile for doctors */}
-            {userRole === "doctor" && (
-              <NavLink
-                to="/doctor-dashboard"
-                className={({ isActive }) =>
-                  `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
-                }
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <UserCog className="h-4 w-4" />
-                Doctor Dashboard
-              </NavLink>
+                Login / Sign Up
+              </Button>
             )}
-            
-            <NavLink
-              to="/rewards"
-              className={({ isActive }) =>
-                `nav-link flex items-center gap-2 ${isActive ? "active" : ""}`
-              }
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Award className="h-4 w-4" />
-              Rewards & Points
-            </NavLink>
           </div>
         </div>
       )}

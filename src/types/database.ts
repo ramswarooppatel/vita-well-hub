@@ -9,3 +9,6 @@ export type Appointment = Database['public']['Tables']['appointments']['Row'];
 export type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
 export type HealthMetric = Database['public']['Tables']['health_metrics']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
+export type DoctorPatient = Database['public']['Tables']['doctor_patients']['Row'];
+
+export type UserRole = 'admin' | 'doctor' | 'patient';

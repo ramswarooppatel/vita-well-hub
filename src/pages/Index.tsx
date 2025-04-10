@@ -11,12 +11,28 @@ import {
   AlertCircle, 
   Activity, 
   Shield, 
-  Users, 
   ArrowRight 
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Index() {
   const navigate = useNavigate();
+  const { user, userRole } = useAuth();
+
+  const handleGetStarted = () => {
+    if (user) {
+      // Redirect based on role
+      if (userRole === 'admin') {
+        navigate('/admin');
+      } else if (userRole === 'doctor') {
+        navigate('/doctor-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    } else {
+      navigate('/auth');
+    }
+  };
 
   const features = [
     {
@@ -96,17 +112,19 @@ export default function Index() {
               <Button 
                 size="lg"
                 className="bg-primary hover:bg-primary/90"
-                onClick={() => navigate("/dashboard")}
+                onClick={handleGetStarted}
               >
-                Get Started
+                {user ? "Go to Dashboard" : "Get Started"}
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => navigate("/telemedicine")}
-              >
-                Book a Consultation
-              </Button>
+              {!user && (
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={() => navigate("/auth")}
+                >
+                  Sign In
+                </Button>
+              )}
             </div>
 
             <div className="mt-16 relative">
@@ -197,9 +215,9 @@ export default function Index() {
               size="lg" 
               variant="secondary" 
               className="bg-white text-primary hover:bg-white/90"
-              onClick={() => navigate("/dashboard")}
+              onClick={handleGetStarted}
             >
-              Get Started <ArrowRight className="ml-2 h-5 w-5" />
+              {user ? "Go to Dashboard" : "Create an Account"} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </section>

@@ -89,6 +89,42 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_patients: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_patients_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_patients_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_metrics: {
         Row: {
           created_at: string
@@ -229,6 +265,7 @@ export type Database = {
           gender: string | null
           id: string
           last_name: string | null
+          role: string | null
           updated_at: string
         }
         Insert: {
@@ -241,6 +278,7 @@ export type Database = {
           gender?: string | null
           id: string
           last_name?: string | null
+          role?: string | null
           updated_at?: string
         }
         Update: {
@@ -253,6 +291,7 @@ export type Database = {
           gender?: string | null
           id?: string
           last_name?: string | null
+          role?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -354,7 +393,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_doctor_access_patient: {
+        Args: { doctor_id: string; patient_id: string }
+        Returns: boolean
+      }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

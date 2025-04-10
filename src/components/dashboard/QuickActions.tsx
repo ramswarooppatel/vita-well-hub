@@ -15,10 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function QuickActions() {
   const navigate = useNavigate();
-  const userRole = "admin"; // For demo: "user", "doctor", "admin"
+  const { userRole } = useAuth();
 
   // Base actions available to all users
   const baseActions = [
