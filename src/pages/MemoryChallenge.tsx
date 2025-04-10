@@ -1,10 +1,11 @@
+
 // Fix the toast import and add user_id to test results submission
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
@@ -41,9 +42,9 @@ export default function MemoryChallenge() {
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();  // Add this to get current user
 
-  const { data: testData, isLoading } = useQuery(
-    ["cognitive-test", testId],
-    async () => {
+  const { data: testData, isLoading } = useQuery({
+    queryKey: ["cognitive-test", testId],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("cognitive_tests")
         .select("*")
@@ -51,17 +52,19 @@ export default function MemoryChallenge() {
         .single();
 
       if (error) {
-        toast.error("Failed to load test", { description: error.message });
+        toast({
+          title: "Failed to load test",
+          description: error.message,
+          variant: "destructive"
+        });
         navigate("/cognitive-tests");
         throw error;
       }
 
       return data as TestData;
     },
-    {
-      enabled: !!testId,
-    }
-  );
+    enabled: !!testId,
+  });
 
   useEffect(() => {
     if (isLoading) return;
@@ -123,7 +126,7 @@ export default function MemoryChallenge() {
         .from('test_results')
         .insert({
           test_id: testId,
-          user_id: user.id, // Add user_id here
+          user_id: user.id,
           score: score,
           max_score: sequence.length,
           completion_time: timeElapsed,
@@ -136,12 +139,20 @@ export default function MemoryChallenge() {
         .single();
       
       if (error) {
-        toast.error("Failed to submit results", { description: error.message });
+        toast({
+          title: "Failed to submit results",
+          description: error.message,
+          variant: "destructive"
+        });
         setSubmitting(false);
         return;
       }
       
-      toast.success("Test completed!", { description: "Redirecting to your results..." });
+      toast({
+        title: "Test completed!",
+        description: "Redirecting to your results...",
+        variant: "default"
+      });
       
       // Navigate to the results page
       setTimeout(() => {
@@ -150,7 +161,10 @@ export default function MemoryChallenge() {
       
     } catch (error) {
       console.error(error);
-      toast.error("An error occurred");
+      toast({
+        title: "An error occurred",
+        variant: "destructive"
+      });
       setSubmitting(false);
     }
   };

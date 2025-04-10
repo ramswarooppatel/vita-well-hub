@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { 
   ArrowLeft, Clock, BarChart3, Calendar, Award, Brain 
 } from "lucide-react";
@@ -28,6 +29,13 @@ import {
   Cell,
 } from "recharts";
 
+// Define a type for the memory challenge answers structure
+interface MemoryChallengeAnswers {
+  sequence?: string[];
+  userSequence?: string[];
+  [key: string]: any;
+}
+
 export default function CognitiveTestResult() {
   const { resultId } = useParams();
   const navigate = useNavigate();
@@ -46,7 +54,11 @@ export default function CognitiveTestResult() {
         .single();
         
       if (error) {
-        toast.error("Failed to load test result", { description: error.message });
+        toast({
+          title: "Failed to load test result",
+          description: error.message,
+          variant: "destructive"
+        });
         navigate("/cognitive-tests");
         throw error;
       }
@@ -68,7 +80,11 @@ export default function CognitiveTestResult() {
         .order("created_at", { ascending: true });
         
       if (error) {
-        toast.error("Failed to load test history", { description: error.message });
+        toast({
+          title: "Failed to load test history",
+          description: error.message,
+          variant: "destructive"
+        });
         throw error;
       }
       
@@ -86,6 +102,20 @@ export default function CognitiveTestResult() {
     { name: "Correct", value: result?.score || 0, color: "#10b981" },
     { name: "Incorrect", value: (result?.max_score || 0) - (result?.score || 0), color: "#f43f5e" },
   ];
+
+  // Type-check and safely access answers data
+  const getTypedAnswers = (): MemoryChallengeAnswers => {
+    if (!result?.answers) return {};
+    
+    // Handle different possible shapes of the answers data
+    if (typeof result.answers === 'object') {
+      return result.answers as MemoryChallengeAnswers;
+    }
+    
+    return {};
+  };
+
+  const answers = getTypedAnswers();
 
   if (isLoading) {
     return (
@@ -262,18 +292,18 @@ export default function CognitiveTestResult() {
                     </div>
                   </div>
                   
-                  {result?.answers && typeof result.answers === 'object' && result.answers !== null && (
+                  {answers && (
                     <div className="border rounded-lg p-4">
                       <h3 className="font-medium mb-3">Answer Review</h3>
                       <div className="space-y-4">
-                        {result.answers.sequence && result.answers.userSequence && (
+                        {answers.sequence && answers.userSequence && (
                           <div className="space-y-3">
                             <p className="text-sm text-muted-foreground">Memory Challenge Sequence</p>
                             
                             <div className="space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Original Sequence:</p>
                               <div className="flex flex-wrap gap-2">
-                                {Array.isArray(result.answers.sequence) && result.answers.sequence.map((item: string, i: number) => (
+                                {Array.isArray(answers.sequence) && answers.sequence.map((item: string, i: number) => (
                                   <div key={`orig-${i}`} className="w-10 h-10 flex items-center justify-center border rounded-md">
                                     <span className="text-lg">{item}</span>
                                   </div>
@@ -284,12 +314,12 @@ export default function CognitiveTestResult() {
                             <div className="space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Your Sequence:</p>
                               <div className="flex flex-wrap gap-2">
-                                {Array.isArray(result.answers.userSequence) && result.answers.userSequence.map((item: string, i: number) => (
+                                {Array.isArray(answers.userSequence) && answers.userSequence.map((item: string, i: number) => (
                                   <div
                                     key={`user-${i}`}
                                     className={`w-10 h-10 flex items-center justify-center border rounded-md ${
-                                      Array.isArray(result.answers.sequence) && i < result.answers.sequence.length && 
-                                      item === result.answers.sequence[i] 
+                                      Array.isArray(answers.sequence) && i < answers.sequence.length && 
+                                      item === answers.sequence[i] 
                                         ? 'bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-800' 
                                         : 'bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-800'
                                     }`}
