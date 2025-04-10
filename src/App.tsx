@@ -21,6 +21,7 @@ import CognitiveTestResult from "./pages/CognitiveTestResult";
 import Admin from "./pages/Admin";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import Rewards from "./pages/Rewards";
+import Records from "./pages/Records";
 import Unauthorized from "./pages/Unauthorized";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,11 @@ const App = () => (
               <Route path="/telemedicine" element={
                 <RouteGuard allowedRoles={["patient", "doctor", "admin"]}>
                   <Telemedicine />
+                </RouteGuard>
+              } />
+               <Route path="/records" element={
+                <RouteGuard allowedRoles={["patient", "doctor", "admin"]}>
+                  <Records />
                 </RouteGuard>
               } />
               <Route path="/symptoms" element={
