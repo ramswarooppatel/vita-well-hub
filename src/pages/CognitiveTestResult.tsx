@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { 
   ArrowLeft, Clock, BarChart3, Calendar, Award, Brain 
 } from "lucide-react";
@@ -263,7 +262,7 @@ export default function CognitiveTestResult() {
                     </div>
                   </div>
                   
-                  {result?.answers && (
+                  {result?.answers && typeof result.answers === 'object' && result.answers !== null && (
                     <div className="border rounded-lg p-4">
                       <h3 className="font-medium mb-3">Answer Review</h3>
                       <div className="space-y-4">
@@ -274,7 +273,7 @@ export default function CognitiveTestResult() {
                             <div className="space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Original Sequence:</p>
                               <div className="flex flex-wrap gap-2">
-                                {result.answers.sequence.map((item: string, i: number) => (
+                                {Array.isArray(result.answers.sequence) && result.answers.sequence.map((item: string, i: number) => (
                                   <div key={`orig-${i}`} className="w-10 h-10 flex items-center justify-center border rounded-md">
                                     <span className="text-lg">{item}</span>
                                   </div>
@@ -285,10 +284,11 @@ export default function CognitiveTestResult() {
                             <div className="space-y-2">
                               <p className="text-xs font-medium text-muted-foreground">Your Sequence:</p>
                               <div className="flex flex-wrap gap-2">
-                                {result.answers.userSequence.map((item: string, i: number) => (
+                                {Array.isArray(result.answers.userSequence) && result.answers.userSequence.map((item: string, i: number) => (
                                   <div
                                     key={`user-${i}`}
                                     className={`w-10 h-10 flex items-center justify-center border rounded-md ${
+                                      Array.isArray(result.answers.sequence) && i < result.answers.sequence.length && 
                                       item === result.answers.sequence[i] 
                                         ? 'bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-800' 
                                         : 'bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-800'

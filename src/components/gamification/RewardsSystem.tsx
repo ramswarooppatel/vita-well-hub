@@ -1,4 +1,5 @@
 
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, Star, Award, Gift, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
 
 type Badge = {
   id: string;

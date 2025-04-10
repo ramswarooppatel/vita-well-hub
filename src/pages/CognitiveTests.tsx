@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -9,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Clock, Trophy, BarChart3, Activity } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { TestCard } from "@/components/cognitive/TestCard";
 import { ProgressStats } from "@/components/cognitive/ProgressStats";
@@ -117,7 +116,7 @@ export default function CognitiveTests() {
                                 <CardTitle className="text-lg">
                                   {result.cognitive_tests?.test_name}
                                 </CardTitle>
-                                <Badge variant={result.score / result.max_score > 0.7 ? "success" : "default"}>
+                                <Badge variant={result.score / result.max_score > 0.7 ? "default" : "outline"}>
                                   Score: {result.score}/{result.max_score}
                                 </Badge>
                               </div>
