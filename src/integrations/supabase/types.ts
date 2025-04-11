@@ -13,40 +13,47 @@ export type Database = {
         Row: {
           appointment_date: string
           created_at: string
-          doctor_name: string
+          doctor_id: string
           id: string
           is_virtual: boolean | null
           notes: string | null
-          specialty: string
-          status: string
+          specialty: string | null
+          status: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           appointment_date: string
           created_at?: string
-          doctor_name: string
+          doctor_id: string
           id?: string
           is_virtual?: boolean | null
           notes?: string | null
-          specialty: string
-          status?: string
+          specialty?: string | null
+          status?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           appointment_date?: string
           created_at?: string
-          doctor_name?: string
+          doctor_id?: string
           id?: string
           is_virtual?: boolean | null
           notes?: string | null
-          specialty?: string
-          status?: string
+          specialty?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_user_id_fkey"
             columns: ["user_id"]
