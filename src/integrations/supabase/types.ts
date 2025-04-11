@@ -9,87 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      activity_logs: {
-        Row: {
-          action: string
-          created_at: string
-          details: Json | null
-          entity_id: string
-          entity_type: string
-          id: string
-          ip_address: string | null
-          user_id: string
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          details?: Json | null
-          entity_id: string
-          entity_type: string
-          id?: string
-          ip_address?: string | null
-          user_id: string
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          details?: Json | null
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          ip_address?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       appointments: {
         Row: {
           appointment_date: string
           created_at: string
-          doctor_id: string
-          doctor_name: string | null
+          doctor_name: string
           id: string
           is_virtual: boolean | null
           notes: string | null
-          specialty: string | null
-          status: string | null
+          specialty: string
+          status: string
           updated_at: string
           user_id: string
         }
         Insert: {
           appointment_date: string
           created_at?: string
-          doctor_id: string
-          doctor_name?: string | null
+          doctor_name: string
           id?: string
           is_virtual?: boolean | null
           notes?: string | null
-          specialty?: string | null
-          status?: string | null
+          specialty: string
+          status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           appointment_date?: string
           created_at?: string
-          doctor_id?: string
-          doctor_name?: string | null
+          doctor_name?: string
           id?: string
           is_virtual?: boolean | null
           notes?: string | null
-          specialty?: string | null
-          status?: string | null
+          specialty?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "appointments_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "appointments_user_id_fkey"
             columns: ["user_id"]
@@ -339,30 +296,6 @@ export type Database = {
         }
         Relationships: []
       }
-      site_settings: {
-        Row: {
-          created_at: string
-          id: string
-          setting_key: string
-          setting_value: Json
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          setting_key: string
-          setting_value: Json
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          setting_key?: string
-          setting_value?: Json
-          updated_at?: string
-        }
-        Relationships: []
-      }
       test_questions: {
         Row: {
           correct_answer: string | null
@@ -466,16 +399,6 @@ export type Database = {
       }
       get_user_role: {
         Args: { user_id: string }
-        Returns: string
-      }
-      log_activity: {
-        Args: {
-          action: string
-          entity_type: string
-          entity_id: string
-          details?: Json
-          ip_address?: string
-        }
         Returns: string
       }
     }
