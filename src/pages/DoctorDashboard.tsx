@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,14 +17,14 @@ import {
   Users,
   Activity,
   CheckCircle,
-  AlertCircle,
+  AlertTriangle, // Changed from ExclamationTriangle to AlertTriangle
   ArrowRight,
   FileText,
   BarChart3,
-  ExclamationTriangle,
   Brain,
   User,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 // Skeleton loaders
 const AppointmentSkeleton = ({ count = 1 }: { count?: number }) => (
@@ -102,7 +103,7 @@ export default function DoctorDashboard() {
           : "Unknown Patient",
       }));
 
-      setAppointments(processedData);
+      setAppointments(processedData as Appointment[]);
     } catch (error: any) {
       console.error("Error fetching appointments:", error);
       setAppointmentsError(error.message);
@@ -122,7 +123,7 @@ export default function DoctorDashboard() {
     try {
       const { data, error } = await supabase
         .from("doctor_patients")
-        .select("user_id", { count: "exact", head: true })
+        .select("patient_id", { count: "exact", head: true })
         .eq("doctor_id", user?.id);
 
       if (error) throw error;
@@ -143,13 +144,13 @@ export default function DoctorDashboard() {
       // First get the patients associated with this doctor
       const { data: patientData, error: patientError } = await supabase
         .from("doctor_patients")
-        .select("user_id")
+        .select("patient_id")
         .eq("doctor_id", user?.id);
 
       if (patientError) throw patientError;
 
       if (patientData && patientData.length > 0) {
-        const patientIds = patientData.map((p) => p.user_id);
+        const patientIds = patientData.map((p) => p.patient_id);
 
         // Then get test results for these patients
         const { data: testData, error: testError } = await supabase
@@ -165,7 +166,7 @@ export default function DoctorDashboard() {
 
         if (testError) throw testError;
 
-        setTestResults(testData || []);
+        setTestResults(testData as TestResult[] || []);
       } else {
         setTestResults([]);
       }
@@ -185,7 +186,7 @@ export default function DoctorDashboard() {
     if (appointmentsError) {
       return (
         <div className="text-center py-4">
-          <ExclamationTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p>Failed to load appointments</p>
         </div>
       );
@@ -237,7 +238,7 @@ export default function DoctorDashboard() {
     if (testsError) {
       return (
         <div className="text-center py-4">
-          <ExclamationTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p>Failed to load test results</p>
         </div>
       );
@@ -283,7 +284,7 @@ export default function DoctorDashboard() {
           {result.score >= 70 ? (
             <CheckCircle className="h-5 w-5 text-green-500" />
           ) : (
-            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
           )}
         </div>
       </div>
@@ -461,12 +462,12 @@ export default function DoctorDashboard() {
               <CardContent>
                 {isLoadingPatients ? (
                   <div className="py-8 text-center">
-                    <div className="h-8 w-8 mx-auto mb-4 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <Spinner size="lg" className="mx-auto mb-4" />
                     <p>Loading patient data...</p>
                   </div>
                 ) : patientsError ? (
                   <div className="py-8 text-center">
-                    <ExclamationTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p>Failed to load patient data</p>
                   </div>
                 ) : patientCount === 0 ? (

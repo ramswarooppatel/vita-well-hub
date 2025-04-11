@@ -7,6 +7,8 @@ export function useSiteSettings() {
   const [settings, setSettings] = useState<SiteSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Add isLoading alias for consistency with other hooks
+  const isLoading = loading;
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -53,5 +55,5 @@ export function useSiteSettings() {
     fetchSettings();
   }, []);
 
-  return { settings, loading, error, fetchSettings, updateSetting };
+  return { settings, loading, error, isLoading, fetchSettings, updateSetting };
 }

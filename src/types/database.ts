@@ -3,7 +3,16 @@ import { Database } from '@/integrations/supabase/types';
 
 export type CognitiveTest = Database['public']['Tables']['cognitive_tests']['Row'];
 export type TestQuestion = Database['public']['Tables']['test_questions']['Row'];
-export type TestResult = Database['public']['Tables']['test_results']['Row'];
+export type TestResult = Database['public']['Tables']['test_results']['Row'] & {
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+  cognitive_tests?: {
+    name: string;
+    category: string;
+  };
+};
 export type HealthMetric = Database['public']['Tables']['health_metrics']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type DoctorPatient = Database['public']['Tables']['doctor_patients']['Row'];
