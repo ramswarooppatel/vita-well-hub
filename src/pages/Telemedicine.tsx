@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  Calendar as CalendarIcon,
+  Calendar,
   Clock,
   Video,
   MessageCircle,
@@ -26,39 +26,9 @@ import {
   MapPin,
   FileText,
   Search,
-  User,
-  Phone,
-  Calendar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { format } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-
-// Dialog components
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-// Calendar components
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Doctor {
   id: string;
@@ -74,16 +44,7 @@ interface Doctor {
 
 export default function Telemedicine() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
-  const [appointmentType, setAppointmentType] = useState("in-person");
-  const [appointmentNotes, setAppointmentNotes] = useState("");
-  const [isBooking, setIsBooking] = useState(false);
 
   const doctors: Doctor[] = [
     {
@@ -91,40 +52,40 @@ export default function Telemedicine() {
       name: "Dr. Sarah Johnson",
       specialty: "Cardiology",
       rating: 4.9,
-      price: 1500,
+      price: 120,
       nextAvailable: "Today, 4:30 PM",
       experience: "15 years",
-      location: "New Delhi, India",
+      location: "New York, NY",
     },
     {
       id: "2",
       name: "Dr. Michael Chen",
       specialty: "General Medicine",
       rating: 4.7,
-      price: 900,
+      price: 90,
       nextAvailable: "Tomorrow, 10:30 AM",
       experience: "8 years",
-      location: "Mumbai, India",
+      location: "Boston, MA",
     },
     {
       id: "3",
-      name: "Dr. Priya Sharma",
+      name: "Dr. Emily Rodriguez",
       specialty: "Dermatology",
       rating: 4.8,
-      price: 1200,
+      price: 110,
       nextAvailable: "Today, 6:00 PM",
       experience: "12 years",
-      location: "Bangalore, India",
+      location: "Miami, FL",
     },
     {
       id: "4",
-      name: "Dr. Rajesh Patel",
+      name: "Dr. David Wilson",
       specialty: "Pediatrics",
       rating: 4.9,
-      price: 1000,
+      price: 100,
       nextAvailable: "Tomorrow, 2:00 PM",
       experience: "10 years",
-      location: "Chennai, India",
+      location: "Chicago, IL",
     },
   ];
 
@@ -150,13 +111,6 @@ export default function Telemedicine() {
     },
   ];
 
-  const availableTimeSlots = [
-    "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", 
-    "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", 
-    "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM", 
-    "5:00 PM", "5:30 PM"
-  ];
-
   const filteredDoctors = doctors.filter((doctor) => {
     if (searchQuery.trim() === "") return true;
     
@@ -168,19 +122,11 @@ export default function Telemedicine() {
     );
   });
 
-  const handleBookConsultation = (doctor: Doctor) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please login to book a consultation",
-        variant: "destructive"
-      });
-      navigate("/auth");
-      return;
-    }
-    
-    setSelectedDoctor(doctor);
-    setBookingDialogOpen(true);
+  const handleBookConsultation = (doctorId: string) => {
+    toast({
+      title: "Booking initiated",
+      description: "You'll be redirected to the booking page.",
+    });
   };
 
   const handleJoinCall = (consultationId: string) => {
@@ -188,7 +134,6 @@ export default function Telemedicine() {
       title: "Joining video call",
       description: "Connecting to your consultation...",
     });
-    // In a real app, this would navigate to a video call interface
   };
 
   const handleViewDetails = (consultationId: string) => {
@@ -196,69 +141,6 @@ export default function Telemedicine() {
       title: "Viewing consultation details",
       description: "Loading consultation information...",
     });
-    // In a real app, this would show detailed consultation info
-  };
-
-  const handleConfirmBooking = async () => {
-    if (!selectedDoctor || !selectedDate || !selectedTimeSlot) {
-      toast({
-        title: "Incomplete details",
-        description: "Please select date and time for your appointment",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsBooking(true);
-
-    try {
-      // Format the appointment date by combining the selected date and time slot
-      const appointmentDate = new Date(selectedDate);
-      const [hours, minutes, period] = selectedTimeSlot.split(/:| /);
-      let hour = parseInt(hours, 10);
-      const minute = parseInt(minutes, 10);
-      
-      if (period === "PM" && hour !== 12) {
-        hour += 12;
-      } else if (period === "AM" && hour === 12) {
-        hour = 0;
-      }
-      
-      appointmentDate.setHours(hour, minute, 0, 0);
-      
-      // In a real app with Supabase, we would save to the database
-      // const { data, error } = await supabase
-      //   .from('appointments')
-      //   .insert({
-      //     user_id: user.id,
-      //     doctor_id: selectedDoctor.id,
-      //     appointment_date: appointmentDate.toISOString(),
-      //     doctor_name: selectedDoctor.name,
-      //     specialty: selectedDoctor.specialty,
-      //     is_virtual: appointmentType === "virtual",
-      //     notes: appointmentNotes,
-      //     status: "scheduled",
-      //   });
-      
-      // For demo purposes, show success without DB interaction
-      toast({
-        title: "Appointment Booked Successfully",
-        description: `Your appointment with ${selectedDoctor.name} has been scheduled for ${format(appointmentDate, "MMMM d, yyyy")} at ${selectedTimeSlot}.`,
-      });
-      
-      setBookingDialogOpen(false);
-      // After booking, simulate a navigation to appointments page
-      // navigate("/appointments");
-    } catch (error) {
-      console.error("Error booking appointment:", error);
-      toast({
-        title: "Booking failed",
-        description: "There was an error booking your appointment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsBooking(false);
-    }
   };
 
   return (
@@ -332,7 +214,7 @@ export default function Telemedicine() {
                         </div>
                       </div>
                       <Badge variant="outline" className="bg-primary/5">
-                        ₹{doctor.price}
+                        ${doctor.price}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -358,7 +240,7 @@ export default function Telemedicine() {
                       View Profile
                     </Button>
                     <Button
-                      onClick={() => handleBookConsultation(doctor)}
+                      onClick={() => handleBookConsultation(doctor.id)}
                     >
                       Book Consultation
                     </Button>
@@ -519,175 +401,6 @@ export default function Telemedicine() {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Appointment booking dialog */}
-      <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Book Appointment</DialogTitle>
-            <DialogDescription>
-              {selectedDoctor && (
-                <>
-                  Schedule an appointment with {selectedDoctor.name}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedDoctor && (
-            <div className="space-y-6 py-4">
-              {/* Doctor info */}
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <User className="w-8 h-8 text-primary/50" />
-                </div>
-                <div>
-                  <h3 className="font-medium">
-                    {selectedDoctor.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{selectedDoctor.specialty}</p>
-                  <p className="text-sm mt-1">₹{selectedDoctor.price} per visit</p>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              {/* Appointment type */}
-              <div className="space-y-2">
-                <Label>Appointment Type</Label>
-                <div className="flex flex-wrap gap-2 sm:gap-4">
-                  <Button
-                    type="button"
-                    variant={appointmentType === "in-person" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1 min-w-[120px]"
-                    onClick={() => setAppointmentType("in-person")}
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    In-person
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={appointmentType === "virtual" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1 min-w-[120px]"
-                    onClick={() => setAppointmentType("virtual")}
-                  >
-                    <Video className="w-4 h-4 mr-2" />
-                    Virtual
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={appointmentType === "chat" ? "default" : "outline"}
-                    size="sm"
-                    className="flex-1 min-w-[120px]"
-                    onClick={() => setAppointmentType("chat")}
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Chat
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Date selection */}
-              <div className="space-y-2">
-                <Label>Select Date</Label>
-                <div className="flex justify-center border rounded-md p-4">
-                  <CalendarComponent
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    className="p-3 pointer-events-auto"
-                    disabled={(date) => {
-                      // Disable past dates, Sundays, and more than 30 days in the future
-                      const now = new Date();
-                      now.setHours(0, 0, 0, 0);
-                      const thirtyDaysLater = new Date();
-                      thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
-                      return (
-                        date < now ||
-                        date > thirtyDaysLater ||
-                        date.getDay() === 0 // Sunday
-                      );
-                    }}
-                  />
-                </div>
-              </div>
-              
-              {/* Time slots */}
-              <div className="space-y-2">
-                <Label>Select Time</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {availableTimeSlots.map((time) => (
-                    <Button
-                      key={time}
-                      type="button"
-                      variant={selectedTimeSlot === time ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedTimeSlot(time)}
-                      className="text-xs sm:text-sm"
-                    >
-                      {time}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Notes */}
-              <div className="space-y-2">
-                <Label>Notes for the doctor (optional)</Label>
-                <Textarea 
-                  placeholder="Describe your symptoms or reason for visit..."
-                  value={appointmentNotes}
-                  onChange={(e) => setAppointmentNotes(e.target.value)}
-                  className="resize-none"
-                  rows={3}
-                />
-              </div>
-              
-              <Separator />
-              
-              {/* Summary */}
-              <div className="bg-muted/50 p-4 rounded-md space-y-2">
-                <h4 className="font-medium">Appointment Summary</h4>
-                <div className="grid grid-cols-2 text-sm gap-2">
-                  <div className="text-muted-foreground">Doctor</div>
-                  <div>{selectedDoctor.name}</div>
-                  <div className="text-muted-foreground">Date</div>
-                  <div>{selectedDate ? format(selectedDate, "MMMM d, yyyy") : "Not selected"}</div>
-                  <div className="text-muted-foreground">Time</div>
-                  <div>{selectedTimeSlot || "Not selected"}</div>
-                  <div className="text-muted-foreground">Type</div>
-                  <div>
-                    {appointmentType === "virtual" ? "Video Consultation" : 
-                     appointmentType === "chat" ? "Chat Consultation" : 
-                     "In-person Visit"}
-                  </div>
-                  <div className="text-muted-foreground">Fee</div>
-                  <div>₹{selectedDoctor.price}</div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setBookingDialogOpen(false)}
-              className="w-full sm:w-auto order-1 sm:order-none"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleConfirmBooking} 
-              disabled={!selectedDate || !selectedTimeSlot || isBooking}
-              className="w-full sm:w-auto"
-            >
-              {isBooking ? "Booking..." : "Confirm Booking"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 }

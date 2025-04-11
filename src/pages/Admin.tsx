@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   UserCog,
   Database,
@@ -89,19 +88,7 @@ export default function Admin() {
           const { data: resultData } = await supabase
             .from("test_results")
             .select("*, profiles(*), cognitive_tests(*)");
-          
-          // Map test_name to name for compatibility
-          const processedResults = resultData?.map(result => ({
-            ...result,
-            cognitive_tests: result.cognitive_tests 
-              ? {
-                  ...result.cognitive_tests,
-                  name: result.cognitive_tests.test_name,
-                }
-              : undefined
-          }));
-          
-          setTestResults(processedResults as TestResult[] || []);
+          setTestResults(resultData || []);
           break;
         case "records":
           const { data: recordData } = await supabase
@@ -197,34 +184,6 @@ export default function Admin() {
       title: "Export successful",
       description: `${activeTab} data has been exported as CSV.`
     });
-  };
-
-  const upcomingAppointments = () => {
-    const today = new Date().toISOString();
-    return appointments
-      .filter((appointment) => appointment.appointment_date > today)
-      .sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime())
-      .slice(0, 5)
-      .map((appointment) => (
-        <div key={appointment.id} className="flex items-center justify-between py-3">
-          <div className="flex items-center">
-            <Avatar className="h-9 w-9 mr-2">
-              <AvatarImage src={`https://avatar.vercel.sh/${appointment.user_id}?text=${appointment.patient_name?.charAt(0)}`} />
-              <AvatarFallback>{appointment.patient_name?.charAt(0) || "P"}</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-medium">{appointment.patient_name || "Patient"}</div>
-              <div className="text-xs text-muted-foreground">
-                {new Date(appointment.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                {' • '}{appointment.doctor_name || "Unassigned Doctor"}
-              </div>
-            </div>
-          </div>
-          <Badge variant={appointment.status === "confirmed" ? "default" : "outline"}>
-            {appointment.status}
-          </Badge>
-        </div>
-      ));
   };
 
   return (

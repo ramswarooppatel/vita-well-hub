@@ -35,7 +35,7 @@ serve(async (req) => {
       .group('role');
 
     if (error) {
-      console.error('Error fetching user roles:', error);
+      console.error('Error fetching users by role:', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
