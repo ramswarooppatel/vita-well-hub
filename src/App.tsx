@@ -4,7 +4,7 @@ import { Toaster } from './components/ui/toaster';
 import { Helmet } from 'react-helmet';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { RouteGuard } from '@/components/auth/RouteGuard';
+import RouteGuard from '@/components/auth/RouteGuard';
 
 // Pages
 import Index from '@/pages/Index';

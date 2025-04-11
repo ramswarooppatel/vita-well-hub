@@ -1,1 +1,11 @@
+
 project_id = "iusvkuescntbclqbtxmn"
+
+[functions.get-users-by-role]
+verify_jwt = true
+
+[functions.get-appointment-status-counts]
+verify_jwt = true
+
+[functions.get-test-category-counts]
+verify_jwt = true
