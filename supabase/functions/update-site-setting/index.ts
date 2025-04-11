@@ -28,31 +28,41 @@ serve(async (req) => {
       });
     }
 
-    // Query to get user counts by role
+    // Parse the request body
+    const { key, value } = await req.json();
+    
+    if (!key) {
+      return new Response(JSON.stringify({ error: 'Missing key parameter' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Update or insert the setting
     const { data, error } = await supabase
-      .from('profiles')
-      .select('role, count(*)')
-      .group('role');
+      .from('site_settings')
+      .upsert({ 
+        setting_key: key, 
+        setting_value: value,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
 
     if (error) {
-      console.error('Error fetching user roles:', error);
+      console.error('Error updating site setting:', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const formatted = data.map(item => ({
-      role: item.role || 'unknown',
-      count: Number(item.count)
-    }));
-
-    return new Response(JSON.stringify(formatted), {
+    return new Response(JSON.stringify(data), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in get-users-by-role:', error);
+    console.error('Error in update-site-setting:', error);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,610 +1,371 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { 
+  useUserRoleStats,
+  useAppointmentStatusStats,
+  useTestCategoryStats
+} from "@/hooks/useAnalytics";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Legend,
-} from "recharts";
-import {
-  BarChart3,
-  PieChart as PieChartIcon,
-  Activity,
-  RefreshCw,
-  Download,
-  Users,
-  CalendarDays,
-  CheckCircle,
-  Brain,
-  FileText,
-} from "lucide-react";
-import { toast } from "sonner";
-import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import { Spinner } from "@/components/ui/spinner";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from 'recharts';
 import { UsersByRoleData, AppointmentStatusData, TestCategoryData } from "@/types/database";
+import { RefreshCw } from "lucide-react";
+
+// Define chart colors
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6384'];
 
 export default function Analytics() {
-  const navigate = useNavigate();
-  const { userRole } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState("30");
-  const [statsData, setStatsData] = useState({
-    totalUsers: 0,
-    newUsersThisMonth: 0,
-    totalAppointments: 0,
-    completedAppointments: 0,
-    totalTests: 0,
-    totalTestResults: 0,
-    totalRecords: 0,
-  });
-  const [usersByRole, setUsersByRole] = useState<UsersByRoleData[]>([]);
-  const [activityData, setActivityData] = useState<{
-    date: string;
-    logins: number;
-    appointments: number;
-    tests: number;
-  }[]>([]);
-  const [appointmentStatus, setAppointmentStatus] = useState<AppointmentStatusData[]>([]);
-  const [testCategories, setTestCategories] = useState<TestCategoryData[]>([]);
-
-  // Redirect if not admin
-  useEffect(() => {
-    if (userRole && userRole !== "admin") {
-      navigate("/unauthorized");
-    }
-  }, [userRole, navigate]);
-
-  // Fetch all stats
-  const fetchAnalytics = async () => {
-    setIsLoading(true);
-    try {
-      // Fetch basic stats
-      await Promise.all([
-        fetchStatsData(),
-        fetchUsersByRole(),
-        fetchActivityData(parseInt(timeRange)),
-        fetchAppointmentStatus(),
-        fetchTestCategories(),
-      ]);
-    } catch (error: any) {
-      toast.error("Failed to load analytics data: " + error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Basic stats
-  const fetchStatsData = async () => {
-    try {
-      const monthStart = startOfMonth(new Date()).toISOString();
-
-      // Count total users
-      const { count: totalUsers } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
-
-      // Count new users this month
-      const { count: newUsersThisMonth } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", monthStart);
-
-      // Count total appointments
-      const { count: totalAppointments } = await supabase
-        .from("appointments")
-        .select("*", { count: "exact", head: true });
-
-      // Count completed appointments
-      const { count: completedAppointments } = await supabase
-        .from("appointments")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "completed");
-
-      // Count tests
-      const { count: totalTests } = await supabase
-        .from("cognitive_tests")
-        .select("*", { count: "exact", head: true });
-
-      // Count test results
-      const { count: totalTestResults } = await supabase
-        .from("test_results")
-        .select("*", { count: "exact", head: true });
-
-      // Count medical records
-      const { count: totalRecords } = await supabase
-        .from("medical_records")
-        .select("*", { count: "exact", head: true });
-
-      setStatsData({
-        totalUsers: totalUsers || 0,
-        newUsersThisMonth: newUsersThisMonth || 0,
-        totalAppointments: totalAppointments || 0,
-        completedAppointments: completedAppointments || 0,
-        totalTests: totalTests || 0,
-        totalTestResults: totalTestResults || 0,
-        totalRecords: totalRecords || 0,
-      });
-    } catch (error) {
-      console.error("Error fetching stats data:", error);
-    }
-  };
-
-  // Users by role
-  const fetchUsersByRole = async () => {
-    try {
-      // Use the edge function
-      const { data, error } = await supabase.functions.invoke('get-users-by-role');
-      
-      if (error) throw error;
-      
-      if (data) {
-        setUsersByRole(data as UsersByRoleData[]);
-      } else {
-        // Fallback with mock data
-        setUsersByRole([
-          { role: "patient", count: 120 },
-          { role: "doctor", count: 15 },
-          { role: "admin", count: 3 },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error fetching user roles data:", error);
-      
-      // Default mock data
-      setUsersByRole([
-        { role: "patient", count: 120 },
-        { role: "doctor", count: 15 },
-        { role: "admin", count: 3 },
-      ]);
-    }
-  };
-
-  // Activity data for the line chart
-  const fetchActivityData = async (days: number) => {
-    try {
-      const dates = Array.from({ length: days }, (_, i) =>
-        format(subDays(new Date(), days - 1 - i), "yyyy-MM-dd")
-      );
-
-      // In a real implementation, this would be a database query for activity logs
-      // This is simplified mock data that looks realistic
-      const mockData = dates.map((date) => {
-        // Create some patterns in the data
-        const dayOfWeek = new Date(date).getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const dayMultiplier = isWeekend ? 0.6 : 1;
-        
-        // Base values with some randomness
-        const loginBase = Math.floor(10 + Math.random() * 15);
-        const appointmentBase = Math.floor(5 + Math.random() * 7);
-        const testBase = Math.floor(3 + Math.random() * 6);
-        
-        return {
-          date,
-          logins: Math.floor(loginBase * dayMultiplier),
-          appointments: Math.floor(appointmentBase * dayMultiplier),
-          tests: Math.floor(testBase * dayMultiplier),
-        };
-      });
-      
-      setActivityData(mockData);
-    } catch (error) {
-      console.error("Error fetching activity data:", error);
-      // Set some default data
-      setActivityData([]);
-    }
-  };
-
-  // Appointment status breakdown
-  const fetchAppointmentStatus = async () => {
-    try {
-      // Use the edge function
-      const { data, error } = await supabase.functions.invoke('get-appointment-status-counts');
-      
-      if (error) throw error;
-      
-      if (data) {
-        setAppointmentStatus(data as AppointmentStatusData[]);
-      } else {
-        // Fallback with mock data
-        setAppointmentStatus([
-          { status: "scheduled", count: 45 },
-          { status: "completed", count: 28 },
-          { status: "cancelled", count: 7 },
-          { status: "missed", count: 3 },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error fetching appointment status data:", error);
-      
-      // Default mock data
-      setAppointmentStatus([
-        { status: "scheduled", count: 45 },
-        { status: "completed", count: 28 },
-        { status: "cancelled", count: 7 },
-        { status: "missed", count: 3 },
-      ]);
-    }
-  };
-
-  // Test categories
-  const fetchTestCategories = async () => {
-    try {
-      // Use the edge function
-      const { data, error } = await supabase.functions.invoke('get-test-category-counts');
-      
-      if (error) throw error;
-      
-      if (data) {
-        setTestCategories(data as TestCategoryData[]);
-      } else {
-        // Fallback with mock data
-        setTestCategories([
-          { category: "Memory", count: 8 },
-          { category: "Attention", count: 6 },
-          { category: "Processing Speed", count: 4 },
-          { category: "Problem Solving", count: 5 },
-          { category: "Verbal Fluency", count: 3 },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error fetching test categories data:", error);
-      
-      // Default mock data
-      setTestCategories([
-        { category: "Memory", count: 8 },
-        { category: "Attention", count: 6 },
-        { category: "Processing Speed", count: 4 },
-        { category: "Problem Solving", count: 5 },
-        { category: "Verbal Fluency", count: 3 },
-      ]);
-    }
-  };
-
-  // Initial data load
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
+  const [activeTab, setActiveTab] = useState("users");
   
-  // Reload when time range changes
-  useEffect(() => {
-    fetchActivityData(parseInt(timeRange));
-  }, [timeRange]);
+  const { 
+    data: userRoleData, 
+    isLoading: isUserRoleLoading, 
+    error: userRoleError, 
+    refetch: refetchUserRoleStats 
+  } = useUserRoleStats();
+  
+  const { 
+    data: appointmentStatusData, 
+    isLoading: isAppointmentStatusLoading, 
+    error: appointmentStatusError, 
+    refetch: refetchAppointmentStatusStats 
+  } = useAppointmentStatusStats();
+  
+  const { 
+    data: testCategoryData, 
+    isLoading: isTestCategoryLoading, 
+    error: testCategoryError, 
+    refetch: refetchTestCategoryStats 
+  } = useTestCategoryStats();
 
-  // Format date for charts
-  const formatDate = (dateStr: string) => {
-    return format(new Date(dateStr), "MMM dd");
+  // Format user roles data for display
+  const formatUserRoleData = (data: UsersByRoleData[]) => {
+    // Capitalize the first letter of each role
+    return data.map(item => ({
+      ...item,
+      role: item.role === 'unknown' ? 'Unknown' : 
+        item.role.charAt(0).toUpperCase() + item.role.slice(1)
+    }));
   };
 
-  // Chart colors
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82ca9d"];
+  // Render the user roles chart
+  const renderUserRolesChart = () => {
+    if (isUserRoleLoading) {
+      return (
+        <div className="flex items-center justify-center h-[300px]">
+          <Spinner size="lg" />
+        </div>
+      );
+    }
 
-  // Handle export reports
-  const handleExportReport = (reportType: string) => {
-    toast.success(`${reportType} report has been generated and downloaded`);
+    if (userRoleError) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-destructive">
+          Error loading user data: {userRoleError.message}
+        </div>
+      );
+    }
+
+    if (!userRoleData || userRoleData.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+          No user data available
+        </div>
+      );
+    }
+
+    const formattedData = formatUserRoleData(userRoleData);
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={formattedData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="role" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#8884d8" name="Number of Users" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={formattedData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="count"
+                nameKey="role"
+                label={({ role, count }) => `${role}: ${count}`}
+              >
+                {formattedData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value, name, props) => [value, props.payload.role]} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  // Render the appointment status chart
+  const renderAppointmentStatusChart = () => {
+    if (isAppointmentStatusLoading) {
+      return (
+        <div className="flex items-center justify-center h-[300px]">
+          <Spinner size="lg" />
+        </div>
+      );
+    }
+
+    if (appointmentStatusError) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-destructive">
+          Error loading appointment data: {appointmentStatusError.message}
+        </div>
+      );
+    }
+
+    if (!appointmentStatusData || appointmentStatusData.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+          No appointment data available
+        </div>
+      );
+    }
+
+    const formattedData = appointmentStatusData.map(item => ({
+      ...item,
+      status: item.status === 'unknown' ? 'Unknown' : 
+        item.status.charAt(0).toUpperCase() + item.status.slice(1)
+    }));
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={formattedData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="status" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#82ca9d" name="Number of Appointments" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={formattedData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#82ca9d"
+                dataKey="count"
+                nameKey="status"
+                label={({ status, count }) => `${status}: ${count}`}
+              >
+                {formattedData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value, name, props) => [value, props.payload.status]} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  // Render the test category chart
+  const renderTestCategoryChart = () => {
+    if (isTestCategoryLoading) {
+      return (
+        <div className="flex items-center justify-center h-[300px]">
+          <Spinner size="lg" />
+        </div>
+      );
+    }
+
+    if (testCategoryError) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-destructive">
+          Error loading test data: {testCategoryError.message}
+        </div>
+      );
+    }
+
+    if (!testCategoryData || testCategoryData.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+          No test category data available
+        </div>
+      );
+    }
+
+    const formattedData = testCategoryData.map(item => ({
+      ...item,
+      category: item.category === 'unknown' ? 'Unknown' : 
+        item.category.charAt(0).toUpperCase() + item.category.slice(1)
+    }));
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={formattedData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="category" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#ff7300" name="Number of Tests" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={formattedData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#ff7300"
+                dataKey="count"
+                nameKey="category"
+                label={({ category, count }) => `${category}: ${count}`}
+              >
+                {formattedData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value, name, props) => [value, props.payload.category]} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
   };
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
             <p className="text-muted-foreground">
-              View platform usage statistics and trends
+              Detailed analytics on users, appointments, and cognitive tests
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={fetchAnalytics}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleExportReport("Analytics")}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              if (activeTab === "users") {
+                refetchUserRoleStats();
+              } else if (activeTab === "appointments") {
+                refetchAppointmentStatusStats();
+              } else if (activeTab === "tests") {
+                refetchTestCategoryStats();
+              }
+            }}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh Data
+          </Button>
         </div>
 
-        {/* Key Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsData.totalUsers}</div>
-              <p className="text-xs text-muted-foreground">
-                +{statsData.newUsersThisMonth} this month
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsData.totalAppointments}</div>
-              <p className="text-xs text-muted-foreground">
-                {statsData.completedAppointments} completed
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Cognitive Tests</CardTitle>
-              <Brain className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsData.totalTests}</div>
-              <p className="text-xs text-muted-foreground">
-                {statsData.totalTestResults} test results
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Medical Records</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statsData.totalRecords}</div>
-              <p className="text-xs text-muted-foreground">
-                Across all patients
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="users">User Statistics</TabsTrigger>
+            <TabsTrigger value="appointments">Appointment Analytics</TabsTrigger>
+            <TabsTrigger value="tests">Test Results</TabsTrigger>
+          </TabsList>
 
-        {/* Activity Chart */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Platform Activity</CardTitle>
+          <TabsContent value="users" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Distribution by Role</CardTitle>
                 <CardDescription>
-                  User activity over time
+                  Breakdown of registered users by their assigned role
                 </CardDescription>
-              </div>
-              <Select
-                value={timeRange}
-                onValueChange={(value) => setTimeRange(value)}
-              >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="30 days" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="14">Last 14 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="60">Last 60 days</SelectItem>
-                  <SelectItem value="90">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              {isLoading ? (
-                <div className="flex h-full items-center justify-center">
-                  <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={activityData}
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={formatDate}
-                      interval={activityData.length > 30 ? 4 : 2}
-                    />
-                    <YAxis />
-                    <Tooltip 
-                      formatter={(value: number, name: string) => [value, name]}
-                      labelFormatter={(label) => formatDate(label as string)}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="logins"
-                      stroke="#8884d8"
-                      activeDot={{ r: 8 }}
-                      name="Logins"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="appointments"
-                      stroke="#82ca9d"
-                      name="Appointments"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="tests"
-                      stroke="#ffc658"
-                      name="Tests Taken"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </CardHeader>
+              <CardContent>
+                {renderUserRolesChart()}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Users by Role */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle>Users by Role</CardTitle>
-                <CardDescription>
-                  Distribution of user accounts by role
-                </CardDescription>
-              </div>
-              <PieChartIcon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                {isLoading ? (
-                  <div className="flex h-full items-center justify-center">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={usersByRole}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="count"
-                        nameKey="role"
-                      >
-                        {usersByRole.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value, name) => [value, `${name}`]} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Appointment Status */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
+          <TabsContent value="appointments" className="space-y-4">
+            <Card>
+              <CardHeader>
                 <CardTitle>Appointments by Status</CardTitle>
                 <CardDescription>
-                  Distribution of appointment statuses
+                  Overview of appointments categorized by their current status
                 </CardDescription>
-              </div>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                {isLoading ? (
-                  <div className="flex h-full items-center justify-center">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={appointmentStatus}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="status" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" name="Appointments" fill="#8884d8">
-                        {appointmentStatus.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                {renderAppointmentStatusChart()}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          {/* Test Categories */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle>Tests by Category</CardTitle>
+          <TabsContent value="tests" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cognitive Tests by Category</CardTitle>
                 <CardDescription>
-                  Distribution of cognitive tests by category
+                  Distribution of cognitive tests across different categories
                 </CardDescription>
-              </div>
-              <Brain className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                {isLoading ? (
-                  <div className="flex h-full items-center justify-center">
-                    <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      layout="vertical"
-                      data={testCategories}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="category" type="category" width={100} />
-                      <Tooltip />
-                      <Bar dataKey="count" name="Tests" fill="#8884d8">
-                        {testCategories.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardHeader>
+              <CardContent>
+                {renderTestCategoryChart()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

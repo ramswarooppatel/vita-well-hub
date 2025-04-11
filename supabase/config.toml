@@ -9,3 +9,24 @@ verify_jwt = true
 
 [functions.get-test-category-counts]
 verify_jwt = true
+
+[functions.get-activity-logs]
+verify_jwt = true
+
+[functions.get-site-settings]
+verify_jwt = false
+
+[functions.update-site-setting]
+verify_jwt = true
+
+[functions.log-activity]
+verify_jwt = true
+
+[functions.get-recent-activity]
+verify_jwt = true
+
+[functions.update-medical-record]
+verify_jwt = true
+
+[functions.get-medical-records]
+verify_jwt = true

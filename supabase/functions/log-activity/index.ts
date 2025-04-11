@@ -28,31 +28,58 @@ serve(async (req) => {
       });
     }
 
-    // Query to get user counts by role
+    // Get the user from the JWT
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Parse the request body
+    const { action, entity_type, entity_id, details } = await req.json();
+    
+    if (!action || !entity_type || !entity_id) {
+      return new Response(JSON.stringify({ error: 'Missing required parameters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get the user's IP address
+    const ip_address = req.headers.get('x-forwarded-for') || 'unknown';
+
+    // Insert the activity log
     const { data, error } = await supabase
-      .from('profiles')
-      .select('role, count(*)')
-      .group('role');
+      .from('activity_logs')
+      .insert({
+        user_id: user.id,
+        action,
+        entity_type,
+        entity_id,
+        details,
+        ip_address
+      })
+      .select()
+      .single();
 
     if (error) {
-      console.error('Error fetching user roles:', error);
+      console.error('Error logging activity:', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const formatted = data.map(item => ({
-      role: item.role || 'unknown',
-      count: Number(item.count)
-    }));
-
-    return new Response(JSON.stringify(formatted), {
+    return new Response(JSON.stringify(data), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in get-users-by-role:', error);
+    console.error('Error in log-activity:', error);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
