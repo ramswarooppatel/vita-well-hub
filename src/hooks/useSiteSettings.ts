@@ -2,80 +2,56 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SiteSetting } from '@/types/database';
-import { toast } from 'sonner';
 
-export function useSiteSettings(key?: string) {
+export function useSiteSettings() {
   const [settings, setSettings] = useState<SiteSetting[]>([]);
-  const [setting, setSetting] = useState<SiteSetting | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        let url = `${supabase.functions.url}/get-site-settings`;
-        if (key) {
-          url += `?key=${encodeURIComponent(key)}`;
-        }
-        
-        const { data, error } = await supabase.functions.invoke('get-site-settings', {
-          body: key ? { key } : undefined
-        });
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      // Use the from method instead of .url
+      const { data, error } = await supabase.from('site_settings').select('*');
 
-        if (error) throw new Error(error.message);
-        
-        if (key && data) {
-          setSetting(data);
-        } else {
-          setSettings(data || []);
-        }
-      } catch (err) {
-        console.error('Error fetching site settings:', err);
-        setError(err instanceof Error ? err : new Error('Failed to fetch site settings'));
-      } finally {
-        setIsLoading(false);
-      }
+      if (error) throw error;
+      setSettings(data || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch settings');
+      console.error('Error fetching site settings:', err);
+    } finally {
+      setLoading(false);
     }
-
-    fetchSettings();
-  }, [key]);
+  };
 
   const updateSetting = async (key: string, value: any) => {
     try {
-      const { data, error } = await supabase.functions.invoke('update-site-setting', {
-        body: { key, value }
-      });
+      const { error } = await supabase
+        .from('site_settings')
+        .update({ setting_value: value })
+        .eq('setting_key', key);
 
-      if (error) throw new Error(error.message);
-
-      // Update the local state
-      if (setting && setting.setting_key === key) {
-        setSetting(data);
-      }
+      if (error) throw error;
       
-      setSettings(prevSettings => 
-        prevSettings.map(s => 
-          s.setting_key === key ? data : s
+      // Update local state
+      setSettings(prev => 
+        prev.map(setting => 
+          setting.setting_key === key 
+            ? { ...setting, setting_value: value } 
+            : setting
         )
       );
-
-      toast.success(`Setting "${key}" updated successfully`);
-      return data;
-    } catch (err) {
+      
+      return true;
+    } catch (err: any) {
       console.error('Error updating site setting:', err);
-      toast.error(`Failed to update setting: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      throw err;
+      return false;
     }
   };
 
-  return {
-    settings,
-    setting: setting?.setting_value,
-    isLoading,
-    error,
-    updateSetting
-  };
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  return { settings, loading, error, fetchSettings, updateSetting };
 }

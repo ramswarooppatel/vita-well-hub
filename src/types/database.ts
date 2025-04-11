@@ -10,6 +10,7 @@ export type DoctorPatient = Database['public']['Tables']['doctor_patients']['Row
 export type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
 export type Appointment = Database['public']['Tables']['appointments']['Row'] & {
   patient_name?: string;
+  doctor_name?: string;
   profiles?: {
     first_name: string | null;
     last_name: string | null;
