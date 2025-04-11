@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,28 +80,41 @@ export default function DoctorDashboard() {
     setIsLoadingAppointments(true);
     setAppointmentsError(null);
     try {
-      const { data, error } = await supabase
+      // First, fetch appointments
+      const { data: appointmentsData, error: appointmentsError } = await supabase
         .from("appointments")
-        .select(`
-          *,
-          profiles:user_id (
-            first_name,
-            last_name
-          )
-        `)
+        .select("*")
         .eq("doctor_id", user?.id);
 
-      if (error) throw error;
+      if (appointmentsError) throw appointmentsError;
+      
+      // Then, for each appointment, fetch the patient's profile details
+      const appointmentsWithProfiles = await Promise.all(
+        appointmentsData.map(async (appointment) => {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("first_name, last_name")
+            .eq("id", appointment.user_id)
+            .single();
 
-      // Process the data to add patient_name
-      const processedData = data.map((appointment) => ({
-        ...appointment,
-        patient_name: appointment.profiles
-          ? `${appointment.profiles.first_name || ""} ${appointment.profiles.last_name || ""}`.trim()
-          : "Unknown Patient",
-      }));
+          if (profileError) {
+            console.error("Error fetching profile for user:", appointment.user_id, profileError);
+            return {
+              ...appointment,
+              patient_name: "Unknown Patient",
+              profiles: { first_name: "", last_name: "" }
+            };
+          }
 
-      setAppointments(processedData as Appointment[]);
+          return {
+            ...appointment,
+            patient_name: `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim() || "Unknown Patient",
+            profiles: profileData
+          };
+        })
+      );
+
+      setAppointments(appointmentsWithProfiles);
     } catch (error: any) {
       console.error("Error fetching appointments:", error);
       setAppointmentsError(error.message);
