@@ -8,6 +8,14 @@ export type HealthMetric = Database['public']['Tables']['health_metrics']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type DoctorPatient = Database['public']['Tables']['doctor_patients']['Row'];
 export type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
+export type Appointment = Database['public']['Tables']['appointments']['Row'] & {
+  patient_name?: string;
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+};
+
 export type ActivityLog = {
   id: string;
   user_id: string;
@@ -52,25 +60,6 @@ export type TestCategoryData = {
   category: string;
   count: number;
 };
-
-export interface Appointment {
-  id: string;
-  appointment_date: string;
-  created_at: string;
-  doctor_id?: string;
-  doctor_name?: string;
-  is_virtual: boolean;
-  notes?: string | null;
-  specialty?: string;
-  status?: string;
-  updated_at: string;
-  user_id: string;
-  patient_name?: string; // Added field for transformed data
-  profiles?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
-}
 
 export interface Profile {
   id: string;

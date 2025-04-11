@@ -28,31 +28,58 @@ serve(async (req) => {
       });
     }
 
-    // Query to get user counts by role
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role, count(*)')
-      .group('role');
+    // Extract the query parameters
+    const url = new URL(req.url);
+    const limit = parseInt(url.searchParams.get('limit') || '100');
+    const userId = url.searchParams.get('user_id');
+    const action = url.searchParams.get('action');
+    const entityType = url.searchParams.get('entity_type');
+
+    // Build the query
+    let query = supabase
+      .from('activity_logs')
+      .select(`
+        *,
+        user:profiles(
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          role
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    // Apply filters if provided
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    
+    if (action) {
+      query = query.eq('action', action);
+    }
+    
+    if (entityType) {
+      query = query.eq('entity_type', entityType);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching user roles:', error);
+      console.error('Error fetching activity logs:', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const formatted = data.map(item => ({
-      role: item.role || 'unknown',
-      count: Number(item.count)
-    }));
-
-    return new Response(JSON.stringify(formatted), {
+    return new Response(JSON.stringify(data || []), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in get-users-by-role:', error);
+    console.error('Error in get-activity-logs:', error);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

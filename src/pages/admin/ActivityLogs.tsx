@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useActivityLogs } from "@/hooks/useActivityLogs";
 import {
   Card,
   CardContent,
@@ -43,6 +44,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import {
   RefreshCw,
   Search,
@@ -65,9 +67,6 @@ import { ActivityLog } from "@/types/database";
 export default function ActivityLogs() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<ActivityLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [entityFilter, setEntityFilter] = useState<string>("all");
@@ -75,6 +74,15 @@ export default function ActivityLogs() {
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [availableActions, setAvailableActions] = useState<string[]>([]);
   const [availableEntities, setAvailableEntities] = useState<string[]>([]);
+  
+  const { 
+    logs, 
+    isLoading, 
+    error, 
+    fetchLogs 
+  } = useActivityLogs({ limit: 100 });
+  
+  const [filteredLogs, setFilteredLogs] = useState<ActivityLog[]>([]);
 
   // Redirect if not admin
   useEffect(() => {
@@ -83,135 +91,43 @@ export default function ActivityLogs() {
     }
   }, [userRole, navigate]);
 
-  // Fetch activity logs
-  const fetchLogs = async () => {
-    setIsLoading(true);
-    try {
-      // In a real implementation, you would fetch from the activity_logs table
-      // Since the table might not be in the database types yet, let's mock the data
-      const mockLogs: ActivityLog[] = [
-        {
-          id: "1",
-          user_id: "user1",
-          action: "login",
-          entity_type: "user",
-          entity_id: "user1",
-          created_at: new Date().toISOString(),
-          user: {
-            first_name: "John",
-            last_name: "Doe",
-            avatar_url: null,
-            contact_number: null,
-            address: null,
-            date_of_birth: null,
-            gender: null,
-            role: "admin",
-            id: "user1",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            email: null
-          },
-          ip_address: "192.168.1.1"
-        },
-        {
-          id: "2",
-          user_id: "user2",
-          action: "view",
-          entity_type: "medical_record",
-          entity_id: "record1",
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          user: {
-            first_name: "Jane",
-            last_name: "Smith",
-            avatar_url: null,
-            contact_number: null,
-            address: null,
-            date_of_birth: null,
-            gender: null,
-            role: "doctor",
-            id: "user2",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            email: null
-          },
-          ip_address: "192.168.1.2"
-        },
-        {
-          id: "3",
-          user_id: "user3",
-          action: "create",
-          entity_type: "appointment",
-          entity_id: "apt1",
-          created_at: new Date(Date.now() - 7200000).toISOString(),
-          user: {
-            first_name: "Bob",
-            last_name: "Johnson",
-            avatar_url: null,
-            contact_number: null,
-            address: null,
-            date_of_birth: null,
-            gender: null,
-            role: "patient",
-            id: "user3",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            email: null
-          },
-          ip_address: "192.168.1.3"
-        },
-      ];
-      
-      setLogs(mockLogs);
-      applyFilters(mockLogs, searchQuery, actionFilter, entityFilter);
-      
-      // Extract unique actions and entities
-      const actions = Array.from(new Set(mockLogs.map(log => log.action)));
-      const entities = Array.from(new Set(mockLogs.map(log => log.entity_type)));
+  // Extract unique actions and entities from the logs
+  useEffect(() => {
+    if (logs.length > 0) {
+      const actions = Array.from(new Set(logs.map(log => log.action)));
+      const entities = Array.from(new Set(logs.map(log => log.entity_type)));
       setAvailableActions(actions);
       setAvailableEntities(entities);
-    } catch (error: any) {
-      toast.error("Failed to load activity logs: " + error.message);
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-  }, []);
+  }, [logs]);
 
   // Apply filters
-  const applyFilters = (data: ActivityLog[], search: string, action: string, entity: string) => {
-    let filtered = [...data];
+  useEffect(() => {
+    let filtered = [...logs];
     
     // Search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(log =>
         log.action.toLowerCase().includes(searchLower) ||
         log.entity_type.toLowerCase().includes(searchLower) ||
         log.user?.first_name?.toLowerCase().includes(searchLower) ||
         log.user?.last_name?.toLowerCase().includes(searchLower) ||
-        log.details?.toString().toLowerCase().includes(searchLower)
+        (log.details && JSON.stringify(log.details).toLowerCase().includes(searchLower))
       );
     }
     
     // Action filter
-    if (action && action !== "all") {
-      filtered = filtered.filter(log => log.action === action);
+    if (actionFilter && actionFilter !== "all") {
+      filtered = filtered.filter(log => log.action === actionFilter);
     }
     
     // Entity filter
-    if (entity && entity !== "all") {
-      filtered = filtered.filter(log => log.entity_type === entity);
+    if (entityFilter && entityFilter !== "all") {
+      filtered = filtered.filter(log => log.entity_type === entityFilter);
     }
     
     setFilteredLogs(filtered);
-  };
-
-  // Handle filter changes
-  useEffect(() => {
-    applyFilters(logs, searchQuery, actionFilter, entityFilter);
   }, [searchQuery, actionFilter, entityFilter, logs]);
 
   // Show details dialog
@@ -282,11 +198,11 @@ export default function ActivityLogs() {
       headers.join(","),
       ...filteredLogs.map(log => [
         log.id,
-        `${log.user?.first_name} ${log.user?.last_name}` || log.user_id,
+        `${log.user?.first_name || ""} ${log.user?.last_name || ""}`.trim() || log.user_id,
         log.action,
         log.entity_type,
         log.entity_id,
-        log.ip_address,
+        log.ip_address || "",
         log.created_at
       ].join(","))
     ].join("\n");
@@ -400,7 +316,26 @@ export default function ActivityLogs() {
                   {isLoading ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-10">
-                        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                        <div className="flex justify-center">
+                          <Spinner size="lg" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-10">
+                        <div className="flex flex-col items-center justify-center text-destructive">
+                          <AlertCircle className="h-8 w-8 mb-2" />
+                          <p>Error loading activity logs</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={fetchLogs}
+                          >
+                            Try Again
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : filteredLogs.length > 0 ? (
@@ -409,10 +344,15 @@ export default function ActivityLogs() {
                         <TableCell>
                           <div className="font-medium">
                             {log.user ? 
-                              `${log.user.first_name} ${log.user.last_name}` : 
+                              `${log.user.first_name || ''} ${log.user.last_name || ''}`.trim() : 
                               `User ${log.user_id.substring(0, 8)}...`
                             }
                           </div>
+                          {log.user?.role && (
+                            <div className="text-xs text-muted-foreground capitalize">
+                              {log.user.role}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge className={getActionColor(log.action)}>
@@ -428,7 +368,7 @@ export default function ActivityLogs() {
                         <TableCell title={format(parseISO(log.created_at), "MMM dd, yyyy HH:mm:ss")}>
                           {formatRelativeTime(log.created_at)}
                         </TableCell>
-                        <TableCell>{log.ip_address}</TableCell>
+                        <TableCell>{log.ip_address || "N/A"}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -484,9 +424,14 @@ export default function ActivityLogs() {
                   <div className="font-semibold">User</div>
                   <div>
                     {selectedLog.user ? 
-                      `${selectedLog.user.first_name} ${selectedLog.user.last_name}` : 
+                      `${selectedLog.user.first_name || ''} ${selectedLog.user.last_name || ''}`.trim() : 
                       selectedLog.user_id
                     }
+                    {selectedLog.user?.role && (
+                      <span className="ml-2 text-sm text-muted-foreground capitalize">
+                        ({selectedLog.user.role})
+                      </span>
+                    )}
                   </div>
                 </div>
                 
@@ -514,7 +459,7 @@ export default function ActivityLogs() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <div className="font-semibold">IP Address</div>
-                    <div>{selectedLog.ip_address}</div>
+                    <div>{selectedLog.ip_address || "N/A"}</div>
                   </div>
                   
                   <div className="space-y-1">
