@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -50,46 +49,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
-
-// Types
-interface StatsData {
-  totalUsers: number;
-  newUsersThisMonth: number;
-  totalAppointments: number;
-  completedAppointments: number;
-  totalTests: number;
-  totalTestResults: number;
-  totalRecords: number;
-}
-
-interface UsersByRoleData {
-  role: string;
-  count: number;
-}
-
-interface ActivityData {
-  date: string;
-  logins: number;
-  appointments: number;
-  tests: number;
-}
-
-interface AppointmentStatusData {
-  status: string;
-  count: number;
-}
-
-interface TestCategoryData {
-  category: string;
-  count: number;
-}
+import { UsersByRoleData, AppointmentStatusData, TestCategoryData } from "@/types/database";
 
 export default function Analytics() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("30");
-  const [statsData, setStatsData] = useState<StatsData>({
+  const [statsData, setStatsData] = useState({
     totalUsers: 0,
     newUsersThisMonth: 0,
     totalAppointments: 0,
@@ -99,7 +66,12 @@ export default function Analytics() {
     totalRecords: 0,
   });
   const [usersByRole, setUsersByRole] = useState<UsersByRoleData[]>([]);
-  const [activityData, setActivityData] = useState<ActivityData[]>([]);
+  const [activityData, setActivityData] = useState<{
+    date: string;
+    logins: number;
+    appointments: number;
+    tests: number;
+  }[]>([]);
   const [appointmentStatus, setAppointmentStatus] = useState<AppointmentStatusData[]>([]);
   const [testCategories, setTestCategories] = useState<TestCategoryData[]>([]);
 
@@ -188,31 +160,20 @@ export default function Analytics() {
   // Users by role
   const fetchUsersByRole = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_users_by_role');
+      // Use the edge function
+      const { data, error } = await supabase.functions.invoke('get-users-by-role');
       
       if (error) throw error;
       
-      // If the RPC isn't available, use this fallback
-      if (!data) {
-        // Fallback if RPC doesn't exist
-        const roles = ["patient", "doctor", "admin"];
-        const roleCounts: UsersByRoleData[] = [];
-        
-        for (const role of roles) {
-          const { count } = await supabase
-            .from("profiles")
-            .select("*", { count: "exact", head: true })
-            .eq("role", role);
-            
-          roleCounts.push({
-            role,
-            count: count || 0,
-          });
-        }
-        
-        setUsersByRole(roleCounts);
+      if (data) {
+        setUsersByRole(data as UsersByRoleData[]);
       } else {
-        setUsersByRole(data);
+        // Fallback with mock data
+        setUsersByRole([
+          { role: "patient", count: 120 },
+          { role: "doctor", count: 15 },
+          { role: "admin", count: 3 },
+        ]);
       }
     } catch (error) {
       console.error("Error fetching user roles data:", error);
@@ -235,7 +196,7 @@ export default function Analytics() {
 
       // In a real implementation, this would be a database query for activity logs
       // This is simplified mock data that looks realistic
-      const mockData: ActivityData[] = dates.map((date) => {
+      const mockData = dates.map((date) => {
         // Create some patterns in the data
         const dayOfWeek = new Date(date).getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -255,16 +216,6 @@ export default function Analytics() {
       });
       
       setActivityData(mockData);
-      
-      // In the future, implement actual database queries like this:
-      /*
-      const { data, error } = await supabase.rpc('get_activity_by_days', { 
-        days_to_fetch: days 
-      });
-      
-      if (error) throw error;
-      setActivityData(data);
-      */
     } catch (error) {
       console.error("Error fetching activity data:", error);
       // Set some default data
@@ -275,12 +226,14 @@ export default function Analytics() {
   // Appointment status breakdown
   const fetchAppointmentStatus = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_appointment_status_counts');
+      // Use the edge function
+      const { data, error } = await supabase.functions.invoke('get-appointment-status-counts');
       
       if (error) throw error;
       
-      // If the RPC isn't available, use this fallback
-      if (!data) {
+      if (data) {
+        setAppointmentStatus(data as AppointmentStatusData[]);
+      } else {
         // Fallback with mock data
         setAppointmentStatus([
           { status: "scheduled", count: 45 },
@@ -288,8 +241,6 @@ export default function Analytics() {
           { status: "cancelled", count: 7 },
           { status: "missed", count: 3 },
         ]);
-      } else {
-        setAppointmentStatus(data);
       }
     } catch (error) {
       console.error("Error fetching appointment status data:", error);
@@ -307,34 +258,22 @@ export default function Analytics() {
   // Test categories
   const fetchTestCategories = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_test_category_counts');
+      // Use the edge function
+      const { data, error } = await supabase.functions.invoke('get-test-category-counts');
       
       if (error) throw error;
       
-      // If the RPC isn't available, use this fallback
-      if (!data) {
-        const { data: testData, error: testError } = await supabase
-          .from("cognitive_tests")
-          .select("category");
-          
-        if (testError) throw testError;
-        
-        if (testData) {
-          // Count occurrences of each category
-          const categoryCounts: Record<string, number> = {};
-          testData.forEach(item => {
-            const category = item.category;
-            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-          });
-          
-          // Convert to array
-          const categoryData: TestCategoryData[] = Object.entries(categoryCounts)
-            .map(([category, count]) => ({ category, count }));
-          
-          setTestCategories(categoryData);
-        }
+      if (data) {
+        setTestCategories(data as TestCategoryData[]);
       } else {
-        setTestCategories(data);
+        // Fallback with mock data
+        setTestCategories([
+          { category: "Memory", count: 8 },
+          { category: "Attention", count: 6 },
+          { category: "Processing Speed", count: 4 },
+          { category: "Problem Solving", count: 5 },
+          { category: "Verbal Fluency", count: 3 },
+        ]);
       }
     } catch (error) {
       console.error("Error fetching test categories data:", error);

@@ -49,163 +49,113 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <Dashboard />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/doctor-dashboard"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor']}>
-                  <DoctorDashboard />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/doctor-os"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor']}>
-                  <DoctorOS />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/appointments"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <Appointments />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/cognitive-tests"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <CognitiveTests />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/memory-challenge"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <MemoryChallenge />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/cognitive-test-result/:id"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <CognitiveTestResult />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/records"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <Records />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/rewards"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <Rewards />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/symptom-checker"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <SymptomChecker />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/telemedicine"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <Telemedicine />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <Profile />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <RouteGuard allowedRoles={['admin', 'doctor', 'patient']}>
-                  <Settings />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/find-doctors"
-              element={
-                <RouteGuard allowedRoles={['admin', 'patient']}>
-                  <FindDoctors />
-                </RouteGuard>
-              }
-            />
+            {/* Patient Routes */}
+            <Route path="/dashboard" element={
+              <RouteGuard allowedRoles={['patient', 'admin']}>
+                <Dashboard />
+              </RouteGuard>
+            } />
+            <Route path="/appointments" element={
+              <RouteGuard allowedRoles={['patient', 'doctor', 'admin']}>
+                <Appointments />
+              </RouteGuard>
+            } />
+            <Route path="/cognitive-tests" element={
+              <RouteGuard allowedRoles={['patient', 'admin']}>
+                <CognitiveTests />
+              </RouteGuard>
+            } />
+            <Route path="/cognitive-tests/:testId" element={
+              <RouteGuard allowedRoles={['patient', 'admin']}>
+                <MemoryChallenge />
+              </RouteGuard>
+            } />
+            <Route path="/cognitive-tests/result/:resultId" element={
+              <RouteGuard allowedRoles={['patient', 'doctor', 'admin']}>
+                <CognitiveTestResult />
+              </RouteGuard>
+            } />
+            <Route path="/records" element={
+              <RouteGuard allowedRoles={['patient', 'doctor', 'admin']}>
+                <Records />
+              </RouteGuard>
+            } />
+            <Route path="/rewards" element={
+              <RouteGuard allowedRoles={['patient', 'admin']}>
+                <Rewards />
+              </RouteGuard>
+            } />
+            <Route path="/symptom-checker" element={
+              <RouteGuard allowedRoles={['patient', 'admin']}>
+                <SymptomChecker />
+              </RouteGuard>
+            } />
+            <Route path="/telemedicine" element={
+              <RouteGuard allowedRoles={['patient', 'doctor', 'admin']}>
+                <Telemedicine />
+              </RouteGuard>
+            } />
+            <Route path="/find-doctors" element={
+              <RouteGuard allowedRoles={['patient', 'admin']}>
+                <FindDoctors />
+              </RouteGuard>
+            } />
+            
+            {/* Doctor Routes */}
+            <Route path="/doctor-dashboard" element={
+              <RouteGuard allowedRoles={['doctor', 'admin']}>
+                <DoctorDashboard />
+              </RouteGuard>
+            } />
+            <Route path="/doctor-os" element={
+              <RouteGuard allowedRoles={['doctor', 'admin']}>
+                <DoctorOS />
+              </RouteGuard>
+            } />
             
             {/* Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <RouteGuard allowedRoles={['admin']}>
-                  <AdminIndex />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <RouteGuard allowedRoles={['admin']}>
-                  <UserManagement />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/admin/content"
-              element={
-                <RouteGuard allowedRoles={['admin']}>
-                  <ContentManagement />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/admin/analytics"
-              element={
-                <RouteGuard allowedRoles={['admin']}>
-                  <Analytics />
-                </RouteGuard>
-              }
-            />
-            <Route
-              path="/admin/logs"
-              element={
-                <RouteGuard allowedRoles={['admin']}>
-                  <ActivityLogs />
-                </RouteGuard>
-              }
-            />
-
-            {/* Error Routes */}
+            <Route path="/admin" element={
+              <RouteGuard allowedRoles={['admin']}>
+                <Admin />
+              </RouteGuard>
+            } />
+            <Route path="/admin/dashboard" element={
+              <RouteGuard allowedRoles={['admin']}>
+                <AdminIndex />
+              </RouteGuard>
+            } />
+            <Route path="/admin/users" element={
+              <RouteGuard allowedRoles={['admin']}>
+                <UserManagement />
+              </RouteGuard>
+            } />
+            <Route path="/admin/content" element={
+              <RouteGuard allowedRoles={['admin']}>
+                <ContentManagement />
+              </RouteGuard>
+            } />
+            <Route path="/admin/analytics" element={
+              <RouteGuard allowedRoles={['admin']}>
+                <Analytics />
+              </RouteGuard>
+            } />
+            <Route path="/admin/activity-logs" element={
+              <RouteGuard allowedRoles={['admin']}>
+                <ActivityLogs />
+              </RouteGuard>
+            } />
+            
+            {/* Common Routes */}
+            <Route path="/profile" element={
+              <RouteGuard>
+                <Profile />
+              </RouteGuard>
+            } />
+            <Route path="/settings" element={
+              <RouteGuard>
+                <Settings />
+              </RouteGuard>
+            } />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

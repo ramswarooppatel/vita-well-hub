@@ -43,7 +43,7 @@ serve(async (req) => {
     }
 
     const formatted = data.map(item => ({
-      category: item.category,
+      category: item.category || 'unknown',
       count: Number(item.count)
     }));
 
