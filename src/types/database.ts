@@ -24,10 +24,10 @@ export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type DoctorPatient = Database['public']['Tables']['doctor_patients']['Row'];
 
 export type MedicalRecord = Database['public']['Tables']['medical_records']['Row'] & {
-  // Add additional fields needed in Records.tsx
-  provider?: string;
-  record_date?: string;
-  status?: string;
+  // Additional fields needed in Records.tsx
+  provider?: string; // Maps to issued_by
+  record_date?: string; // Maps to issued_date
+  status?: string; // Custom field for UI state
 };
 
 export type Appointment = Database['public']['Tables']['appointments']['Row'] & {
@@ -100,3 +100,21 @@ export interface Profile {
 }
 
 export type UserRole = 'admin' | 'doctor' | 'patient';
+
+export interface Doctor extends Profile {
+  specialty?: string;
+  education?: string[];
+  experience?: number;
+  rating?: number;
+  reviews_count?: number;
+  languages?: string[];
+  consultation_fee?: number;
+  available_slots?: string[];
+  is_virtual?: boolean;
+  is_verified?: boolean;
+  is_featured?: boolean;
+  is_available?: boolean;
+  location?: string;
+  bio?: string;
+  hospital?: string;
+}
