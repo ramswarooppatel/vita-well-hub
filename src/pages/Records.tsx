@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { 
@@ -62,7 +61,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { MedicalRecord } from "@/types/database";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Record statuses and types for form selection
 const RECORD_STATUS = ["Active", "Completed", "Pending Review"];
 const RECORD_TYPES = [
   "Lab Result", 
@@ -76,7 +74,6 @@ const RECORD_TYPES = [
 ];
 
 export default function Records() {
-  // State setup
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,7 +82,6 @@ export default function Records() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<MedicalRecord | null>(null);
   
-  // Form state
   const [formData, setFormData] = useState({
     title: "",
     record_type: RECORD_TYPES[0],
@@ -98,46 +94,38 @@ export default function Records() {
   const { toast } = useToast();
   const { user, userRole } = useAuth();
   
-  // Fetch medical records based on user role
-  useEffect(() => {
-    const fetchRecords = async () => {
-      setLoading(true);
-      try {
-        let query = supabase.from('medical_records').select('*');
-        
-        // Filter by user ID if patient
-        if (userRole === 'patient' && user) {
-          query = query.eq('user_id', user.id);
-        }
-        
-        // If doctor, fetch all records of associated patients
-        if (userRole === 'doctor' && user) {
-          // This would require a more complex query - for now just showing all
-          // In a real app, this would filter to only show patients associated with this doctor
-        }
-        
-        const { data, error } = await query.order('record_date', { ascending: false });
-        
-        if (error) throw error;
-        setMedicalRecords(data || []);
-      } catch (err: any) {
-        console.error("Error fetching medical records:", err);
-        toast({
-          title: "Error",
-          description: "Failed to load medical records",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+  const fetchRecords = async () => {
+    setLoading(true);
+    try {
+      let query = supabase.from('medical_records').select('*');
+      
+      if (userRole === 'patient' && user) {
+        query = query.eq('user_id', user.id);
       }
-    };
-    
+      
+      const { data, error } = await query.order('issued_date', { ascending: false });
+      
+      if (error) throw error;
+      
+      setMedicalRecords(processRecordsForUI(data || []));
+    } catch (err: any) {
+      console.error("Error fetching medical records:", err);
+      toast({
+        title: "Error",
+        description: "Failed to load medical records",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     if (user) {
       fetchRecords();
     }
   }, [user, userRole, toast]);
   
-  // Filter and search records
   const filteredRecords = medicalRecords.filter((record) => {
     const matchesSearch = 
       record.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -149,18 +137,15 @@ export default function Records() {
     return matchesSearch && matchesFilter;
   });
   
-  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   
-  // Handle select changes
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   
-  // Reset form to defaults
   const resetForm = () => {
     setFormData({
       title: "",
@@ -173,7 +158,6 @@ export default function Records() {
     setCurrentRecord(null);
   };
   
-  // Open edit dialog with record data
   const handleEdit = (record: MedicalRecord) => {
     setCurrentRecord(record);
     setFormData({
@@ -187,7 +171,6 @@ export default function Records() {
     setIsEditing(true);
   };
   
-  // Submit form for add/edit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -202,23 +185,20 @@ export default function Records() {
     
     try {
       if (isEditing && currentRecord) {
-        // Update existing record
         const { error } = await supabase
           .from('medical_records')
           .update({
             title: formData.title,
             record_type: formData.record_type,
-            record_date: formData.record_date,
-            provider: formData.provider,
+            issued_date: formData.record_date,
+            issued_by: formData.provider,
             description: formData.description,
-            status: formData.status,
             updated_at: new Date().toISOString(),
           })
           .eq('id', currentRecord.id);
           
         if (error) throw error;
         
-        // Log activity
         await supabase.functions.invoke('log-activity', {
           body: {
             action: 'update',
@@ -232,7 +212,6 @@ export default function Records() {
           description: "Medical record updated successfully",
         });
         
-        // Update local state
         setMedicalRecords(records => 
           records.map(r => 
             r.id === currentRecord.id 
@@ -240,9 +219,11 @@ export default function Records() {
                   ...r, 
                   title: formData.title,
                   record_type: formData.record_type,
+                  issued_date: formData.record_date,
+                  issued_by: formData.provider,
+                  description: formData.description,
                   record_date: formData.record_date,
                   provider: formData.provider,
-                  description: formData.description,
                   status: formData.status,
                   updated_at: new Date().toISOString(),
                 } 
@@ -250,23 +231,20 @@ export default function Records() {
           )
         );
       } else {
-        // Add new record
         const { data, error } = await supabase
           .from('medical_records')
           .insert({
             user_id: user.id,
             title: formData.title,
             record_type: formData.record_type,
-            record_date: formData.record_date,
-            provider: formData.provider,
+            issued_date: formData.record_date,
+            issued_by: formData.provider,
             description: formData.description,
-            status: formData.status,
           })
           .select();
           
         if (error) throw error;
         
-        // Log activity
         if (data && data[0]) {
           await supabase.functions.invoke('log-activity', {
             body: {
@@ -276,8 +254,14 @@ export default function Records() {
             }
           });
           
-          // Update local state
-          setMedicalRecords(prev => [data[0], ...prev]);
+          const newRecord = {
+            ...data[0],
+            record_date: data[0].issued_date,
+            provider: data[0].issued_by,
+            status: formData.status
+          };
+          
+          setMedicalRecords(prev => [newRecord as MedicalRecord, ...prev]);
         }
         
         toast({
@@ -286,7 +270,6 @@ export default function Records() {
         });
       }
       
-      // Reset and close dialog
       resetForm();
       isEditing ? setIsEditing(false) : setIsAdding(false);
     } catch (err: any) {
@@ -299,27 +282,24 @@ export default function Records() {
     }
   };
   
-  // Delete a record
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (recordId: string) => {
     try {
       const { error } = await supabase
         .from('medical_records')
         .delete()
-        .eq('id', id);
+        .eq('id', recordId);
         
       if (error) throw error;
       
-      // Log activity
       await supabase.functions.invoke('log-activity', {
         body: {
           action: 'delete',
           entity_type: 'medical_record',
-          entity_id: id,
+          entity_id: recordId,
         }
       });
       
-      // Update local state
-      setMedicalRecords(records => records.filter(r => r.id !== id));
+      setMedicalRecords(records => records.filter(r => r.id !== recordId));
       
       toast({
         title: "Success",
@@ -334,8 +314,7 @@ export default function Records() {
       });
     }
   };
-
-  // Function to determine badge color based on status
+  
   const getBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case 'active':
@@ -347,6 +326,15 @@ export default function Records() {
       default:
         return 'default';
     }
+  };
+  
+  const processRecordsForUI = (records: any[]) => {
+    return records.map(record => ({
+      ...record,
+      record_date: record.issued_date,
+      provider: record.issued_by,
+      status: record.status || 'Active'
+    }));
   };
   
   return (
@@ -513,7 +501,6 @@ export default function Records() {
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                                       <AlertDialogAction 
-                                        variant="destructive" 
                                         onClick={() => handleDelete(record.id)}
                                       >
                                         Delete
@@ -656,7 +643,6 @@ export default function Records() {
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction 
-                                      variant="destructive" 
                                       onClick={() => handleDelete(record.id)}
                                     >
                                       Delete
@@ -686,7 +672,6 @@ export default function Records() {
           </TabsContent>
         </Tabs>
         
-        {/* Add Record Dialog */}
         <Dialog open={isAdding} onOpenChange={setIsAdding}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -810,7 +795,6 @@ export default function Records() {
           </DialogContent>
         </Dialog>
         
-        {/* Edit Record Dialog */}
         <Dialog open={isEditing} onOpenChange={setIsEditing}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>

@@ -1,22 +1,35 @@
 
 import { Database } from '@/integrations/supabase/types';
 
-export type CognitiveTest = Database['public']['Tables']['cognitive_tests']['Row'];
+export type CognitiveTest = Database['public']['Tables']['cognitive_tests']['Row'] & {
+  name?: string; // Alias for test_name to maintain compatibility
+};
+
 export type TestQuestion = Database['public']['Tables']['test_questions']['Row'];
+
 export type TestResult = Database['public']['Tables']['test_results']['Row'] & {
   profiles?: {
     first_name: string | null;
     last_name: string | null;
   };
   cognitive_tests?: {
-    name: string;
+    name?: string; // Alias for test_name
+    test_name?: string;
     category: string;
   };
 };
+
 export type HealthMetric = Database['public']['Tables']['health_metrics']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type DoctorPatient = Database['public']['Tables']['doctor_patients']['Row'];
-export type MedicalRecord = Database['public']['Tables']['medical_records']['Row'];
+
+export type MedicalRecord = Database['public']['Tables']['medical_records']['Row'] & {
+  // Add additional fields needed in Records.tsx
+  provider?: string;
+  record_date?: string;
+  status?: string;
+};
+
 export type Appointment = Database['public']['Tables']['appointments']['Row'] & {
   patient_name?: string;
   doctor_name?: string;

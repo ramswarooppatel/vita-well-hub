@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   UserCog,
   Database,
@@ -87,7 +89,19 @@ export default function Admin() {
           const { data: resultData } = await supabase
             .from("test_results")
             .select("*, profiles(*), cognitive_tests(*)");
-          setTestResults(resultData || []);
+          
+          // Map test_name to name for compatibility
+          const processedResults = resultData?.map(result => ({
+            ...result,
+            cognitive_tests: result.cognitive_tests 
+              ? {
+                  ...result.cognitive_tests,
+                  name: result.cognitive_tests.test_name,
+                }
+              : undefined
+          }));
+          
+          setTestResults(processedResults as TestResult[] || []);
           break;
         case "records":
           const { data: recordData } = await supabase

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +16,7 @@ import {
   Users,
   Activity,
   CheckCircle,
-  AlertTriangle, // Changed from ExclamationTriangle to AlertTriangle
+  AlertTriangle,
   ArrowRight,
   FileText,
   BarChart3,
@@ -26,7 +25,6 @@ import {
 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
-// Skeleton loaders
 const AppointmentSkeleton = ({ count = 1 }: { count?: number }) => (
   <>
     {Array(count)
@@ -90,8 +88,7 @@ export default function DoctorDashboard() {
             last_name
           )
         `)
-        .eq("doctor_id", user?.id)
-        .order("appointment_date", { ascending: true });
+        .eq("doctor_id", user?.id);
 
       if (error) throw error;
 
@@ -157,7 +154,7 @@ export default function DoctorDashboard() {
           .from("test_results")
           .select(`
             *,
-            cognitive_tests (name, category),
+            cognitive_tests (*, name:test_name),
             profiles:user_id (first_name, last_name)
           `)
           .in("user_id", patientIds)
